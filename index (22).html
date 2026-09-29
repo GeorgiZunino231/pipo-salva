@@ -1,0 +1,2501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipo v6 — El tutor de Salva</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--azul:#1B2D6B;--aclaro:#E8EDFF;--am:#F5C842;--amc:#FFF8DC;--verde:#2ECC71;--vc:#E8F8EE;--rojo:#E74C3C;--fondo:#F8F7F3;--gris:#8892B0;--river:#CC0000;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:var(--fondo);min-height:100vh;color:#1a1a2e;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.active{display:flex!important;}
+
+/* AVATAR FLOTANTE */
+.av-float{position:fixed;top:12px;right:12px;z-index:9999;cursor:pointer;}
+.av-float-inner{width:48px;height:48px;border-radius:50%;background:var(--am);border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,.25);overflow:hidden;display:flex;align-items:center;justify-content:center;transition:transform .13s;}
+.av-float-inner:hover{transform:scale(1.12);}
+.av-float-inner svg{width:42px;height:42px;}
+
+/* HOME */
+.home-top{background:var(--azul);padding:2rem 1.5rem 3.5rem;text-align:center;position:relative;}
+.home-top::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:36px;background:var(--fondo);border-radius:50% 50% 0 0/36px 36px 0 0;}
+.owl{width:80px;height:80px;background:var(--am);border-radius:50%;margin:0 auto .9rem;display:flex;align-items:center;justify-content:center;font-size:38px;border:4px solid white;cursor:pointer;overflow:hidden;}
+.home-top h1{color:white;font-size:1.7rem;font-weight:900;line-height:1.15;}
+.home-top h1 b{color:var(--am);}
+.home-top p{color:rgba(255,255,255,.75);font-size:.88rem;margin-top:.35rem;}
+.wallet-bar{display:flex;gap:.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap;}
+.wb{background:rgba(255,255,255,.2);border-radius:20px;padding:.3rem .9rem;color:white;font-size:.85rem;font-weight:800;}
+
+/* CALENDARIO EXÁMENES */
+.exam-cal{margin:0 1.4rem 1.2rem;overflow-x:auto;padding-bottom:.4rem;}
+.exam-cal::-webkit-scrollbar{height:4px;}
+.exam-cal::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px;}
+.exam-scroll{display:flex;gap:.6rem;min-width:max-content;}
+.exam-chip{border-radius:12px;padding:.55rem .85rem;text-align:center;flex-shrink:0;cursor:pointer;transition:transform .12s;border:2px solid transparent;}
+.exam-chip:hover{transform:translateY(-2px);}
+.exam-chip .ec-mat{font-size:.7rem;font-weight:800;opacity:.8;}
+.exam-chip .ec-dia{font-size:1.1rem;font-weight:900;line-height:1.1;}
+.exam-chip .ec-mes{font-size:.65rem;font-weight:700;opacity:.7;}
+.exam-chip .ec-dias{font-size:.68rem;font-weight:800;margin-top:.2rem;border-radius:20px;padding:1px 6px;display:inline-block;}
+.ec-green{background:#E8F8EE;border-color:#27AE60;color:#166534;}
+.ec-green .ec-dias{background:#27AE60;color:white;}
+.ec-yellow{background:#FFF8DC;border-color:#F5C842;color:#78350F;}
+.ec-yellow .ec-dias{background:#F5C842;color:#78350F;}
+.ec-red{background:#FEE2E2;border-color:#E74C3C;color:#991B1B;}
+.ec-red .ec-dias{background:#E74C3C;color:white;}
+
+.home-body{padding:.5rem 1.5rem 1.5rem;max-width:520px;margin:0 auto;width:100%;}
+.greet-box{background:white;border-radius:14px 14px 14px 4px;padding:.9rem 1rem;font-size:.9rem;color:var(--azul);font-weight:700;border-left:4px solid var(--am);box-shadow:0 2px 10px rgba(0,0,0,.07);cursor:pointer;display:flex;align-items:center;gap:.55rem;}
+.greet-box .gs-ico{font-size:1.05rem;flex-shrink:0;}
+.mode-list{display:flex;flex-direction:column;gap:.75rem;}
+.mode-btn{background:white;border-radius:14px;padding:1rem 1.2rem;display:flex;align-items:center;gap:.9rem;cursor:pointer;border:2.5px solid #ccc;box-shadow:0 2px 8px rgba(0,0,0,.06);text-align:left;width:100%;font-family:'Nunito',sans-serif;transition:transform .13s;}
+.mode-btn:hover{transform:translateY(-2px);}
+.mode-btn.b1{border-color:#4A90D9;}.mode-btn.b2{border-color:var(--verde);}.mode-btn.b3{border-color:var(--am);}.mode-btn.b4{border-color:#27AE60;}.mode-btn.b5{border-color:var(--river);}.mode-btn.b6{border-color:#9333EA;}.mode-btn.b7{border-color:#0EA5E9;}
+.mode-ico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.mode-ico.b1{background:#E8F2FC;}.mode-ico.b2{background:var(--vc);}.mode-ico.b3{background:var(--amc);}.mode-ico.b4{background:#E8F8EE;}.mode-ico.b5{background:#FEE2E2;}.mode-ico.b6{background:#F5F3FF;}.mode-ico.b7{background:#E0F2FE;}
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+.home-card{border-radius:13px;padding:1.1rem .85rem;cursor:pointer;text-align:center;border:2.5px solid transparent;transition:transform .13s;font-family:'Nunito',sans-serif;width:100%;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.home-card:hover{transform:translateY(-3px);}
+.home-card .hci{font-size:1.9rem;margin-bottom:.4rem;}
+.home-card h3{font-size:.87rem;font-weight:800;margin:0;}
+.home-card p{font-size:.68rem;margin:2px 0 0;opacity:.75;font-weight:600;}
+.hc1{border-color:#4A90D9;background:#EEF2FF;color:#1E3A8A;}
+.hc2{border-color:#0EA5E9;background:#E0F2FE;color:#075985;}
+.hc3{border-color:var(--am);background:var(--amc);color:#78350F;}
+.hc4{border-color:#27AE60;background:#E8F8EE;color:#166534;}
+.hc5{border-color:var(--river);background:#FEE2E2;color:#7A0000;}
+.hc6{border-color:#9333EA;background:#F5F3FF;color:#5B21B6;}
+.hc-bonus{grid-column:span 2;border-color:#F59E0B;background:linear-gradient(135deg,#FDE68A,#FCA5A5);color:#78350F;}
+.gate-modal{position:fixed;inset:0;background:linear-gradient(160deg,#7a0000,var(--river));display:none;align-items:center;justify-content:center;z-index:10001;padding:1.2rem;}
+.gate-modal.show{display:flex;}
+.gate-card{background:white;border-radius:20px;padding:2rem 1.5rem;text-align:center;max-width:340px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.3);}
+.gate-ico{font-size:3rem;margin-bottom:.5rem;}
+.gate-card h2{color:var(--azul);margin-bottom:.3rem;font-size:1.3rem;}
+.gate-card p{color:var(--gris);font-size:.82rem;margin-bottom:1.3rem;line-height:1.4;}
+.mama-badge{position:fixed;top:0;left:0;right:0;background:#1E293B;color:white;text-align:center;font-size:.72rem;font-weight:700;padding:.5rem .8rem;cursor:pointer;z-index:9996;}
+body.mama-mode{padding-top:2.1rem;}
+.gswitch{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9997;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.95);border:2px solid var(--azul);color:var(--azul);font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.dato-card{background:linear-gradient(135deg,#EEF2FF,#E0F2FE);border-radius:16px;padding:1.1rem 1.2rem;margin:0 1.4rem 1rem;box-shadow:0 2px 10px rgba(0,0,0,.06);border:2px solid #C7D2FE;}
+.dato-label{font-size:.72rem;font-weight:900;color:#4338CA;letter-spacing:.03em;margin-bottom:.45rem;}
+.dato-fact{font-size:.86rem;color:#1E293B;font-weight:600;line-height:1.5;margin-bottom:.75rem;}
+.dato-prompt{font-size:.84rem;font-weight:800;color:#4338CA;margin-bottom:.55rem;line-height:1.4;}
+.mode-txt h2{font-size:.97rem;font-weight:800;color:var(--azul);margin:0;}
+.mode-txt p{font-size:.75rem;color:var(--gris);margin:2px 0 0;font-weight:600;}
+.mode-arr{margin-left:auto;color:var(--gris);font-size:1.1rem;}
+
+/* NAV */
+.topbar{background:var(--azul);padding:1rem 1.3rem;display:flex;align-items:center;gap:.8rem;}
+.back-btn{background:rgba(255,255,255,.2);border:none;border-radius:9px;width:36px;height:36px;cursor:pointer;color:white;font-size:1rem;font-family:'Nunito',sans-serif;}
+.topbar h2{color:white;font-size:1rem;font-weight:800;flex:1;margin:0;}
+.star-chip{background:rgba(255,255,255,.2);border-radius:20px;padding:.28rem .7rem;font-size:.8rem;font-weight:800;color:white;}
+.body{padding:1.2rem;max-width:520px;margin:0 auto;width:100%;}
+
+/* MATERIAS */
+.mat-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:.4rem;}
+.mat-card{border-radius:13px;padding:1rem .85rem;cursor:pointer;text-align:center;border:2.5px solid transparent;transition:transform .13s;font-family:'Nunito',sans-serif;width:100%;}
+.mat-card:hover{transform:translateY(-3px);}
+.mat-card .mi{font-size:1.8rem;margin-bottom:.35rem;}
+.mat-card h3{font-size:.87rem;font-weight:800;margin:0;}
+.mat-card p{font-size:.7rem;margin:2px 0 0;opacity:.7;font-weight:600;}
+.ml{background:#EEF2FF;border-color:#818CF8;color:#3730A3;}
+.mi2{background:#FFF7ED;border-color:#FB923C;color:#9A3412;}
+.mm{background:#F0FDF4;border-color:#4ADE80;color:#166534;}
+.ms{background:#FDF2F8;border-color:#E879F9;color:#701A75;}
+.mn{background:#EFF6FF;border-color:#60A5FA;color:#1E40AF;}
+.mf{background:#FEF9C3;border-color:#FACC15;color:#854D0E;}
+
+/* TEMAS */
+.tema-item{background:white;border-radius:12px;padding:.88rem 1rem;margin-bottom:.6rem;cursor:pointer;display:flex;align-items:center;gap:.75rem;box-shadow:0 2px 7px rgba(0,0,0,.06);border:2px solid transparent;transition:border-color .12s,transform .1s;font-family:'Nunito',sans-serif;width:100%;text-align:left;}
+.tema-item:hover{border-color:var(--azul);transform:translateX(3px);}
+.tema-item.done{border-color:var(--verde);}
+.tn{width:28px;height:28px;border-radius:50%;background:var(--aclaro);color:var(--azul);font-weight:800;font-size:.78rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tn.ok{background:var(--vc);color:#166534;}
+.ti h3{font-size:.88rem;font-weight:700;color:var(--azul);margin:0;}
+.ti p{font-size:.72rem;color:var(--gris);font-weight:600;margin:0;}
+.te{margin-left:auto;background:var(--amc);border-radius:20px;padding:.2rem .5rem;font-size:.72rem;font-weight:800;color:#92400E;white-space:nowrap;}
+.te.ok{background:var(--vc);color:#166534;}
+
+/* PIPO TIP */
+.ptip{background:var(--azul);border-radius:12px;padding:.88rem 1rem;margin-bottom:1rem;display:flex;gap:.6rem;}
+.ptip .pe{font-size:1.4rem;flex-shrink:0;}
+.ptip p{color:white;font-size:.83rem;font-weight:600;line-height:1.5;margin:0;}
+.ptip p b{color:var(--am);}
+
+/* TABS */
+.tabs{display:flex;gap:.35rem;margin-bottom:.9rem;overflow-x:auto;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:1;min-width:60px;padding:.48rem .3rem;border:2px solid #E2E8F0;border-radius:9px;background:white;font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;color:var(--gris);white-space:nowrap;}
+.tab.on{background:var(--azul);color:white;border-color:var(--azul);}
+.tab-content{display:none;}
+.tab-content.on{display:block;}
+
+/* SPEAK BTN */
+.speak-btn{background:var(--amc);border:2px solid var(--am);border-radius:10px;padding:.55rem .9rem;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;color:#78350F;cursor:pointer;display:flex;align-items:center;gap:.45rem;margin-bottom:.9rem;width:100%;}
+.speak-btn.speaking{background:var(--am);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.7;}}
+.speaking{animation:pulse .8s infinite;}
+
+/* SLIDESHOW */
+.slideshow{background:var(--azul);border-radius:14px;overflow:hidden;margin-bottom:.85rem;}
+.slide{display:none;padding:1.4rem 1.2rem;text-align:center;min-height:175px;flex-direction:column;align-items:center;justify-content:center;}
+.slide.on{display:flex;}
+.s-ico{font-size:2.8rem;margin-bottom:.55rem;}
+.s-tit{color:var(--am);font-size:.98rem;font-weight:900;margin-bottom:.4rem;}
+.s-txt{color:white;font-size:.86rem;line-height:1.6;font-weight:600;}
+.slide-nav{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;background:rgba(0,0,0,.2);}
+.slide-nav button{background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:.35rem .8rem;color:white;font-family:'Nunito',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;}
+.slide-dots{display:flex;gap:.3rem;}
+.sdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3);}
+.sdot.on{background:var(--am);}
+.slide-counter{color:rgba(255,255,255,.7);font-size:.75rem;font-weight:700;}
+
+/* INFOGRAFÍA */
+.flujo-wrap{background:white;border-radius:11px;padding:.85rem;margin-bottom:.8rem;box-shadow:0 2px 6px rgba(0,0,0,.05);}
+.flujo-wrap p{font-size:.75rem;font-weight:800;color:var(--gris);margin-bottom:.45rem;}
+.flujo{display:flex;flex-wrap:wrap;gap:.3rem;}
+.ftag{background:var(--aclaro);border-radius:20px;padding:.25rem .65rem;font-size:.75rem;font-weight:700;color:var(--azul);}
+.farr{color:var(--gris);font-size:.82rem;align-self:center;}
+.info-card{display:flex;gap:.7rem;background:white;border-radius:11px;padding:.72rem .85rem;margin-bottom:.5rem;box-shadow:0 2px 6px rgba(0,0,0,.05);}
+.info-card .ie{font-size:1.4rem;flex-shrink:0;width:32px;text-align:center;}
+.info-card .it strong{display:block;font-size:.76rem;font-weight:800;color:var(--azul);margin-bottom:2px;}
+.info-card .it span{font-size:.8rem;color:#334155;line-height:1.45;}
+
+/* SVG MATEMÁTICA */
+.math-visual{background:white;border-radius:13px;padding:1rem;margin-bottom:.8rem;box-shadow:0 2px 7px rgba(0,0,0,.06);}
+.math-visual h4{font-size:.82rem;font-weight:800;color:var(--azul);margin:0 0 .65rem;}
+.math-visual svg{display:block;max-width:100%;margin:0 auto;}
+.math-note{font-size:.76rem;color:var(--gris);text-align:center;margin-top:.4rem;font-style:italic;}
+.math-paper{background:white;border:2px dashed #E2E8F0;border-radius:12px;padding:1rem;margin-bottom:.8rem;text-align:center;}
+.math-paper h4{font-size:.82rem;font-weight:800;color:var(--azul);margin:0 0 .5rem;}
+.math-paper p{font-size:.8rem;color:#334155;line-height:1.6;}
+.math-paper .try{display:inline-block;background:var(--amc);border-radius:9px;padding:.4rem .85rem;font-size:.8rem;font-weight:700;color:#78350F;margin-top:.5rem;}
+
+/* VIDEOS */
+.vid-embed{border-radius:12px;overflow:hidden;margin-bottom:.7rem;background:#000;position:relative;padding-top:56.25%;}
+.vid-embed iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
+.vid-label{font-size:.8rem;font-weight:700;color:var(--azul);margin-bottom:.35rem;}
+.vid-meta{font-size:.7rem;color:var(--gris);margin-bottom:.8rem;}
+.vid-card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 7px rgba(0,0,0,.07);margin-bottom:.65rem;cursor:pointer;border:2px solid transparent;transition:border-color .12s;}
+.vid-card:hover{border-color:var(--azul);}
+.v-thumb{height:76px;background:var(--azul);display:flex;align-items:center;justify-content:center;font-size:2rem;position:relative;}
+.v-play{position:absolute;background:rgba(0,0,0,.4);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:white;line-height:32px;text-align:center;}
+.v-info{padding:.6rem .85rem;}
+.v-info h4{font-size:.85rem;font-weight:800;color:var(--azul);margin:0;}
+.v-info p{font-size:.72rem;color:var(--gris);font-weight:600;margin:2px 0 0;}
+.v-dur{font-size:.67rem;background:var(--aclaro);color:var(--azul);padding:1px 6px;border-radius:20px;display:inline-block;margin-top:.28rem;font-weight:700;}
+
+/* JUEGOS */
+.j-card{background:white;border-radius:12px;padding:.85rem 1rem;margin-bottom:.6rem;display:flex;align-items:center;gap:.8rem;cursor:pointer;box-shadow:0 2px 7px rgba(0,0,0,.07);border:2px solid var(--verde);transition:transform .12s;font-family:'Nunito',sans-serif;width:100%;text-align:left;}
+.j-card:hover{transform:translateX(4px);}
+.je{width:42px;height:42px;border-radius:10px;background:var(--vc);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+.ji h4{font-size:.88rem;font-weight:800;color:var(--azul);margin:0;}
+.ji p{font-size:.72rem;color:var(--gris);font-weight:600;margin:0;}
+.jb{margin-left:auto;background:var(--vc);color:#166534;border-radius:20px;padding:.2rem .55rem;font-size:.7rem;font-weight:800;white-space:nowrap;}
+
+/* QUIZ */
+.quiz-wrap{background:white;border-radius:14px;padding:1.2rem;box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.quiz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;}
+.quiz-top span{font-size:.76rem;color:var(--gris);font-weight:700;}
+.qpbar{height:5px;background:#E2E8F0;border-radius:3px;flex:1;margin:0 .6rem;}
+.qpfill{height:5px;background:var(--azul);border-radius:3px;transition:width .3s;}
+.quiz-q{font-size:.93rem;font-weight:700;color:var(--azul);margin-bottom:.9rem;line-height:1.5;}
+.quiz-opts{display:flex;flex-direction:column;gap:.48rem;}
+.qopt{background:var(--fondo);border:2px solid #E2E8F0;border-radius:10px;padding:.68rem .88rem;cursor:pointer;font-size:.85rem;font-weight:600;text-align:left;transition:all .1s;font-family:'Nunito',sans-serif;width:100%;}
+.qopt:hover:not(:disabled){border-color:var(--azul);background:var(--aclaro);}
+.qopt:disabled{cursor:not-allowed;}
+.qopt.ok{border-color:var(--verde);background:var(--vc);color:#166534;}
+.qopt.mal{border-color:var(--rojo);background:#FEE2E2;color:#991B1B;}
+.qfb{margin-top:.75rem;padding:.65rem .88rem;border-radius:9px;font-size:.82rem;font-weight:700;display:none;}
+.qfb.on{display:block;}
+.qfb.ok{background:var(--vc);color:#166534;}
+.qfb.mal{background:#FEE2E2;color:#991B1B;}
+.qnext{width:100%;margin-top:.75rem;padding:.72rem;background:var(--azul);color:white;border:none;border-radius:10px;font-size:.88rem;font-weight:800;cursor:pointer;display:none;font-family:'Nunito',sans-serif;}
+.qnext.on{display:block;}
+.ya-comp{background:var(--vc);border-radius:12px;padding:.95rem;text-align:center;margin-bottom:.85rem;}
+.ya-comp p{font-size:.86rem;font-weight:700;color:#166534;}
+.ya-comp .ysc{font-size:1.35rem;font-weight:900;color:#166534;margin:.3rem 0;}
+
+/* RESULTADO */
+.res{text-align:center;padding:1.4rem .4rem;}
+.res .rico{font-size:3rem;margin-bottom:.65rem;}
+.res h2{font-size:1.2rem;font-weight:900;color:var(--azul);}
+.res .rsc{font-size:1.9rem;font-weight:900;color:var(--azul);margin:.6rem 0;}
+.res .rsc small{font-size:.88rem;color:var(--gris);}
+.earn-box{background:var(--amc);border-radius:13px;padding:.8rem;margin:.8rem 0;}
+.earn-box .es{font-size:1.7rem;}
+.earn-box .en{font-size:1.35rem;font-weight:900;color:#92400E;margin:.2rem 0;}
+.earn-box p{font-size:.8rem;font-weight:700;color:#92400E;margin:0;}
+.earn-box small{font-size:.7rem;color:var(--gris);}
+.no-earn{background:#FEE2E2;border-radius:13px;padding:.8rem;margin:.8rem 0;text-align:center;}
+.no-earn p{font-size:.86rem;font-weight:700;color:#991B1B;}
+
+/* BOTONES */
+.btn-p{background:var(--azul);color:white;border:none;border-radius:11px;padding:.75rem 1.3rem;font-size:.86rem;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;width:100%;margin-top:.5rem;display:block;}
+.btn-s{background:white;color:var(--azul);border:2.5px solid var(--azul);border-radius:11px;padding:.65rem 1.3rem;font-size:.83rem;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;width:100%;margin-top:.38rem;display:block;}
+.btn-river{background:var(--river);color:white;border:none;border-radius:11px;padding:.75rem 1.3rem;font-size:.86rem;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;width:100%;margin-top:.5rem;display:block;}
+
+/* BILLETERA */
+.w-head{background:linear-gradient(135deg,#166534,#27AE60);border-radius:16px;padding:1.3rem;margin-bottom:.95rem;color:white;text-align:center;}
+.w-head h2{font-size:1rem;font-weight:900;margin:0 0 .22rem;}
+.w-sal{font-size:2.1rem;font-weight:900;margin:.38rem 0;}
+.w-dol{font-size:.9rem;opacity:.85;font-weight:700;}
+.w-sec{background:white;border-radius:13px;padding:.95rem 1rem;margin-bottom:.75rem;box-shadow:0 2px 7px rgba(0,0,0,.06);}
+.w-sec h3{font-size:.86rem;font-weight:800;color:var(--azul);margin:0 0 .65rem;}
+.edu-card{background:linear-gradient(135deg,var(--azul),#2A4499);border-radius:13px;padding:.95rem 1rem;margin-bottom:.75rem;color:white;}
+.edu-card h3{font-size:.86rem;font-weight:800;color:var(--am);margin:0 0 .38rem;}
+.edu-card p{font-size:.8rem;line-height:1.5;opacity:.92;margin:0;}
+.edu-tip{background:rgba(255,255,255,.14);border-radius:7px;padding:.42rem .65rem;margin-top:.48rem;font-size:.78rem;font-weight:700;}
+.pbar{background:#E2E8F0;border-radius:20px;height:9px;overflow:hidden;margin-top:.38rem;}
+.pbarfill{height:9px;border-radius:20px;background:linear-gradient(90deg,#27AE60,var(--am));transition:width .5s;}
+.hist-row{display:flex;align-items:center;gap:.65rem;padding:.52rem 0;border-bottom:1px solid #F1F5F9;}
+.hist-row:last-child{border-bottom:none;}
+.hico{width:28px;height:28px;border-radius:50%;background:var(--amc);display:flex;align-items:center;justify-content:center;font-size:.82rem;flex-shrink:0;}
+.hinfo p{font-size:.78rem;font-weight:700;margin:0;}
+.hinfo small{font-size:.68rem;color:var(--gris);}
+.hamt{margin-left:auto;font-size:.83rem;font-weight:800;color:#27AE60;}
+.wq-box{background:var(--aclaro);border-radius:12px;padding:.95rem;margin-bottom:.75rem;}
+.wq-box h3{font-size:.86rem;font-weight:800;color:var(--azul);margin:0 0 .6rem;}
+.wq-q{font-size:.86rem;font-weight:700;color:var(--azul);margin-bottom:.6rem;line-height:1.5;}
+.wq-opts{display:flex;flex-direction:column;gap:.42rem;}
+.wq-opt{background:white;border:2px solid #E2E8F0;border-radius:9px;padding:.62rem .82rem;cursor:pointer;font-size:.83rem;font-weight:600;text-align:left;font-family:'Nunito',sans-serif;width:100%;transition:border-color .1s;}
+.wq-opt:hover:not(:disabled){border-color:var(--azul);}
+.wq-opt.ok{border-color:var(--verde);background:var(--vc);color:#166534;}
+.wq-opt.mal{border-color:var(--rojo);background:#FEE2E2;color:#991B1B;}
+
+/* EXAMEN */
+.ex-card{background:white;border-radius:12px;padding:.9rem 1rem;margin-bottom:.65rem;cursor:pointer;display:flex;align-items:center;gap:.75rem;box-shadow:0 2px 7px rgba(0,0,0,.06);border-left:5px solid var(--am);transition:transform .1s;font-family:'Nunito',sans-serif;width:100%;text-align:left;}
+.ex-card:hover{transform:translateX(3px);}
+.ex-f{background:var(--amc);border-radius:8px;padding:.32rem .55rem;text-align:center;flex-shrink:0;}
+.ex-f .dia{font-size:1.05rem;font-weight:900;color:var(--azul);line-height:1;}
+.ex-f .mes{font-size:.58rem;color:var(--gris);font-weight:700;}
+.ex-i h3{font-size:.86rem;font-weight:800;color:var(--azul);margin:0;}
+.ex-i p{font-size:.71rem;color:var(--gris);font-weight:600;margin:0;}
+.ex-d{margin-left:auto;text-align:center;}
+.ex-d .num{font-size:1.1rem;font-weight:900;color:var(--azul);line-height:1;}
+.ex-d .lbl{font-size:.58rem;color:var(--gris);font-weight:700;}
+.plan-row{display:flex;gap:.65rem;align-items:flex-start;margin-bottom:.6rem;padding-bottom:.6rem;border-bottom:1px solid #F1F5F9;}
+.plan-row:last-child{border-bottom:none;}
+.plan-tag{background:var(--aclaro);border-radius:7px;padding:.24rem .52rem;font-size:.68rem;font-weight:800;color:var(--azul);flex-shrink:0;min-width:50px;text-align:center;}
+.plan-row p{font-size:.8rem;color:#334155;font-weight:600;line-height:1.4;margin:0;}
+.rec-box{background:var(--fondo);border-radius:11px;padding:.8rem;margin-top:.8rem;}
+.rec-box h4{font-size:.8rem;font-weight:800;color:var(--azul);margin:0 0 .55rem;}
+.rec-row{display:flex;align-items:center;gap:.6rem;padding:.38rem 0;border-bottom:1px solid #E2E8F0;cursor:pointer;}
+.rec-row:last-child{border-bottom:none;}
+.rec-row:hover .rec-txt{text-decoration:underline;}
+.rec-ico{font-size:1rem;}
+.rec-txt{font-size:.78rem;font-weight:700;color:#2A4499;flex:1;}
+.rec-tag{font-size:.66rem;background:var(--aclaro);color:var(--azul);border-radius:20px;padding:1px 6px;font-weight:700;}
+
+/* ADMIN */
+.admin-wrap{background:white;border-radius:13px;padding:1.1rem;box-shadow:0 2px 10px rgba(0,0,0,.08);margin-bottom:.8rem;}
+.admin-wrap h3{font-size:.9rem;font-weight:800;color:var(--azul);margin:0 0 .7rem;}
+.astat{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid #F1F5F9;font-size:.83rem;}
+.astat:last-child{border-bottom:none;}
+.astat .lbl{color:var(--gris);font-weight:600;}
+.astat .val{font-weight:800;color:var(--azul);}
+.ahrow{display:flex;align-items:center;gap:.58rem;padding:.42rem 0;border-bottom:1px solid #F1F5F9;font-size:.78rem;}
+.ahrow:last-child{border-bottom:none;}
+.ahico{font-size:.95rem;}
+.ahinfo{flex:1;color:#334155;font-weight:600;}
+.ahdate{color:var(--gris);font-size:.7rem;}
+.ahscore{font-weight:800;color:var(--azul);}
+.pin-scr{background:white;border-radius:13px;padding:1.4rem;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.pin-scr h3{font-size:.98rem;font-weight:800;color:var(--azul);margin:0 0 .45rem;}
+.pin-scr p{font-size:.83rem;color:var(--gris);margin:0 0 .95rem;}
+.pin-inp{width:100%;padding:.75rem;border:2.5px solid #E2E8F0;border-radius:10px;font-family:'Nunito',sans-serif;font-size:1.2rem;font-weight:800;text-align:center;letter-spacing:.3rem;margin-bottom:.7rem;}
+.pin-inp:focus{outline:none;border-color:var(--azul);}
+.pin-err{color:var(--rojo);font-size:.8rem;font-weight:700;margin-bottom:.45rem;display:none;}
+
+/* AVATAR */
+.av-screen-top{background:linear-gradient(160deg,var(--azul),#2A4499);border-radius:16px;padding:1.3rem;text-align:center;margin-bottom:.95rem;position:relative;overflow:hidden;}
+.av-preview{margin:0 auto .7rem;display:block;}
+.av-nm{color:white;font-size:1.05rem;font-weight:900;}
+.av-lv{color:var(--am);font-size:.8rem;font-weight:700;margin-top:.2rem;}
+.av-badges{display:flex;gap:.4rem;justify-content:center;margin-top:.4rem;flex-wrap:wrap;}
+.avb{background:rgba(255,255,255,.18);border-radius:20px;padding:.22rem .65rem;color:white;font-size:.72rem;font-weight:700;}
+.av-sec{background:white;border-radius:13px;padding:.95rem;margin-bottom:.75rem;box-shadow:0 2px 7px rgba(0,0,0,.06);}
+.av-sec h3{font-size:.86rem;font-weight:800;color:var(--azul);margin:0 0 .7rem;}
+.av-opts{display:flex;flex-wrap:wrap;gap:.45rem;}
+.av-opt{border-radius:10px;padding:.5rem .7rem;font-size:.8rem;font-weight:700;cursor:pointer;border:2.5px solid transparent;transition:all .11s;font-family:'Nunito',sans-serif;display:flex;align-items:center;gap:.32rem;background:#F1F5F9;}
+.av-opt.sel{border-color:var(--azul);background:var(--aclaro);transform:scale(1.04);}
+.av-opt:hover{transform:scale(1.03);}
+
+/* ===== V6 ADDITIONS ===== */
+.gback,.ghome{position:fixed;top:12px;z-index:9997;width:40px;height:40px;border-radius:50%;background:rgba(27,45,107,.92);border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,.25);color:white;font-size:1.05rem;cursor:pointer;display:none;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;}
+.gback{left:12px;}
+.ghome{left:60px;background:rgba(245,200,66,.95);color:var(--azul);}
+.gback.show,.ghome.show{display:flex;}
+.gback:active,.ghome:active{transform:scale(.92);}
+.topbar{padding-left:6.4rem;}
+
+.streak-chip{display:flex;align-items:center;gap:.2rem;}
+
+.sess-wrap{margin:0 1.4rem .6rem;background:white;border-radius:12px;padding:.55rem .85rem;display:flex;align-items:center;gap:.55rem;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.sess-wrap .si{font-size:1.05rem;}
+.sess-wrap p{font-size:.78rem;font-weight:800;color:var(--azul);margin:0;flex:1;}
+.sess-wrap span{font-size:.86rem;font-weight:900;color:var(--azul);font-variant-numeric:tabular-nums;}
+
+.exmode-banner{margin:0 1.4rem 1rem;background:linear-gradient(135deg,#991B1B,var(--river));border-radius:13px;padding:.85rem 1rem;color:white;display:flex;align-items:center;gap:.7rem;cursor:pointer;animation:examPulse 1.6s infinite;border:none;width:calc(100% - 2.8rem);text-align:left;font-family:'Nunito',sans-serif;}
+@keyframes examPulse{0%,100%{box-shadow:0 0 0 0 rgba(231,76,60,.45);}50%{box-shadow:0 0 0 8px rgba(231,76,60,0);}}
+.exmode-banner .ee{font-size:1.5rem;}
+.exmode-banner b{display:block;font-size:.86rem;}
+.exmode-banner span{font-size:.74rem;opacity:.9;}
+
+.qnum-inp{width:100%;padding:.7rem .85rem;border:2.5px solid #E2E8F0;border-radius:10px;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:800;text-align:center;margin-bottom:.6rem;}
+.qnum-inp:focus{outline:none;border-color:var(--azul);}
+.qwrite-area{width:100%;min-height:110px;padding:.75rem;border:2.5px solid #E2E8F0;border-radius:10px;font-family:'Nunito',sans-serif;font-size:.86rem;line-height:1.5;resize:vertical;margin-bottom:.6rem;}
+.qwrite-area:focus{outline:none;border-color:var(--azul);}
+.qrubric{background:var(--aclaro);border-radius:10px;padding:.65rem .8rem;font-size:.76rem;color:var(--azul);font-weight:700;margin-bottom:.6rem;line-height:1.5;}
+.qwrite-pend{background:var(--amc);border-radius:10px;padding:.7rem .85rem;font-size:.8rem;font-weight:700;color:#78350F;margin-top:.6rem;}
+
+.tema-item.locked{opacity:.55;cursor:not-allowed;}
+.tema-item.locked:hover{transform:none;border-color:transparent;}
+.tn.locked{background:#E2E8F0;color:#94A3B8;}
+
+@keyframes breathe{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-1.5px) scale(1.015);}}
+.av-figure.anim{animation:breathe 2.6s ease-in-out infinite;transform-origin:center bottom;}
+@keyframes blink{0%,92%,100%{transform:scaleY(1);}95%{transform:scaleY(.08);}}
+.av-eye.anim{animation:blink 4.2s ease-in-out infinite;transform-origin:center;}
+.av-eye.anim.e2{animation-delay:.02s;}
+
+.av-screen-top.bg-river{background:linear-gradient(160deg,#7a0000,var(--river) 55%,#8a1414);position:relative;}
+.av-screen-top.bg-river::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 14px,transparent 14px 28px);}
+.av-screen-top.bg-river::after{content:'';position:absolute;left:50%;top:58%;width:70px;height:70px;border:2px solid rgba(255,255,255,.35);border-radius:50%;transform:translate(-50%,-50%);}
+.av-screen-top.bg-minecraft{background:linear-gradient(160deg,#4A7C2A,#3A6122 55%,#7a5230);position:relative;}
+.av-screen-top.bg-minecraft::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.08) 0 12px,transparent 12px 24px),repeating-linear-gradient(90deg,rgba(0,0,0,.08) 0 12px,transparent 12px 24px);}
+.av-screen-top.bg-biblio{background:linear-gradient(160deg,#6B4226,#8a5a34 55%,#5c3a1e);position:relative;}
+.av-screen-top.bg-biblio::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 3px,transparent 3px 26px);}
+.av-screen-top>*{position:relative;z-index:1;}
+.bg-opt-preview{width:16px;height:16px;border-radius:4px;display:inline-block;vertical-align:middle;margin-right:.3rem;border:1px solid rgba(0,0,0,.15);}
+.bg-opt-preview.river{background:linear-gradient(135deg,#7a0000,var(--river));}
+.bg-opt-preview.minecraft{background:linear-gradient(135deg,#4A7C2A,#7a5230);}
+.bg-opt-preview.biblio{background:linear-gradient(135deg,#6B4226,#8a5a34);}
+
+.pipo-toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:var(--azul);color:white;padding:.7rem 1.1rem;border-radius:12px;font-size:.82rem;font-weight:700;max-width:88%;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:all .25s;z-index:10000;}
+.pipo-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.desemp-form{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.9rem;}
+.desemp-form select,.desemp-form input{width:100%;padding:.6rem .75rem;border:2px solid #E2E8F0;border-radius:9px;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:600;background:white;}
+.desemp-form select:focus,.desemp-form input:focus{outline:none;border-color:var(--azul);}
+.desemp-row{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid #F1F5F9;font-size:.78rem;}
+.desemp-row:last-child{border-bottom:none;}
+.desemp-row b{color:var(--azul);}
+.desemp-bonus{margin-left:auto;font-weight:800;color:#166534;white-space:nowrap;}
+.prog-mat{background:white;border-radius:14px;padding:1rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.prog-mat h3{font-size:.95rem;margin:0 0 .3rem;color:var(--azul);}
+.prog-bar-wrap{background:#F1F5F9;border-radius:8px;height:10px;overflow:hidden;margin-bottom:.35rem;}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,#0EA5E9,#38BDF8);border-radius:8px;transition:width .3s;}
+.prog-sub{font-size:.72rem;color:var(--gris);font-weight:700;margin-bottom:.7rem;}
+.prog-tema-row{display:flex;align-items:center;gap:.6rem;padding:.45rem 0;border-bottom:1px solid #F1F5F9;font-size:.8rem;}
+.prog-tema-row:last-child{border-bottom:none;}
+.prog-tema-row .pti{font-size:1.05rem;flex-shrink:0;width:22px;text-align:center;}
+.prog-tema-row .ptn{flex:1;font-weight:700;color:var(--azul);}
+.prog-tema-row .pts{font-size:.72rem;font-weight:800;padding:.2rem .55rem;border-radius:20px;white-space:nowrap;}
+.pts.dominado{background:#DCFCE7;color:#166534;}
+.pts.camino{background:#FEF3C7;color:#92400E;}
+.pts.repasar{background:#FEE2E2;color:#991B1B;}
+.pts.pendiente{background:#F1F5F9;color:#64748B;}
+.pts.bloqueado{background:#F1F5F9;color:#94A3B8;}
+.prog-streak{background:linear-gradient(135deg,#0EA5E9,#0284C7);color:white;border-radius:14px;padding:1rem;margin-bottom:1.1rem;text-align:center;}
+.prog-streak b{font-size:1.5rem;display:block;}
+</style>
+</head>
+<body>
+
+<!-- ¿QUIÉN USA PIPO? -->
+<div id="gate-modal" class="gate-modal">
+  <div class="gate-card">
+    <div class="gate-ico">🦉</div>
+    <h2>¡Hola! Soy Pipo</h2>
+    <p>¿Quién va a usar la app ahora? Así puedo llevar bien el tiempo de estudio y la racha de Salva.</p>
+    <button class="btn-p" onclick="enterAsSalva()">🧒 Soy Salva, vengo a estudiar</button>
+    <button class="btn-s" onclick="enterAsMama()">👀 Soy mamá, vengo a revisar</button>
+  </div>
+</div>
+<div id="mama-badge" class="mama-badge" onclick="showEntryGate()" style="display:none">👀 Modo revisión de mamá — no suma tiempo ni racha. Tocá para cambiar.</div>
+
+<!-- BOTONES GLOBALES (siempre visibles, arriba izquierda) -->
+<button class="gback" id="gback-btn" onclick="goBack()" title="Volver">←</button>
+<button class="ghome" id="ghome-btn" onclick="goHome()" title="Ir al inicio">🏠</button>
+<button class="gswitch" id="gswitch-btn" onclick="showEntryGate()" title="Cambiar quién usa Pipo">👀</button>
+
+<!-- AVATAR FLOTANTE (siempre visible) -->
+<div class="av-float" onclick="openAvatar()" title="Mi personaje">
+  <div class="av-float-inner" id="av-float-inner">🎮</div>
+</div>
+
+<!-- HOME -->
+<div id="s-home" class="screen active">
+  <div class="home-top">
+    <div class="owl" id="home-owl" onclick="openAvatar()">🦉</div>
+    <h1>¡Hola, <b>Salva</b>!<br>Soy <b>Pipo</b> 👋</h1>
+    <p>Tu tutor personal — siempre listo</p>
+    <div class="greet-box" style="margin:.9rem 1.2rem 0;text-align:left" onclick="speakGreeting()">
+      <span id="greet-box">¡Bienvenido! 🚀</span>
+      <span class="gs-ico" id="greet-speak-ico">🔊</span>
+    </div>
+    <div class="wallet-bar">
+      <div class="wb streak-chip" id="streak-chip">🔥 <span id="h-streak">0</span> días</div>
+      <div class="wb">⭐ <span id="h-st">0</span></div>
+      <div class="wb">💵 $<span id="h-ps">0</span></div>
+      <div class="wb">🇺🇸 u$s <span id="h-dl">0.00</span></div>
+    </div>
+  </div>
+  <div id="dato-wrap"></div>
+  <!-- CALENDARIO -->
+  <div id="exam-cal-wrap" style="padding:.9rem 1.4rem .2rem"></div>
+  <div class="sess-wrap"><div class="si">⏱️</div><p>Tiempo de esta sesión</p><span id="sess-time">00:00</span></div>
+  <div id="exmode-wrap"></div>
+  <div class="home-body">
+    <div class="home-grid">
+      <button class="home-card hc1" onclick="openMat()"><div class="hci">📚</div><h3>Estudiar</h3><p>Animación · Quiz · Juegos</p></button>
+      <button class="home-card hc2" onclick="openProgreso()"><div class="hci">📊</div><h3>Mi progreso</h3><p>Cuánto dominás cada tema</p></button>
+      <button class="home-card hc3" onclick="openExamen()"><div class="hci">🎯</div><h3>Próximo examen</h3><p>Plan + recursos del cole</p></button>
+      <button class="home-card hc4" onclick="openWallet()"><div class="hci">💰</div><h3>Mi billetera</h3><p>Estrellas · Plata · Dólares</p></button>
+      <button class="home-card hc5" onclick="openAdmin()"><div class="hci">🔐</div><h3>Panel de mamá</h3><p>Seguimiento y control</p></button>
+      <button class="home-card hc6" onclick="openAvatar()"><div class="hci" id="home-av-ico">🎮</div><h3>Mi personaje</h3><p>Personalizá tu avatar</p></button>
+      <button class="home-card hc-bonus" onclick="startBridgeQuiz()"><div class="hci">🌉</div><h3>Bonus: Puente de Materias</h3><p>Preguntas que conectan todo lo que aprendiste — como en el cole</p></button>
+    </div>
+  </div>
+</div>
+
+<!-- MATERIAS -->
+<div id="s-mat" class="screen">
+  <div class="topbar"><h2 id="mat-title">Elegí una materia</h2><div class="star-chip">⭐ <span class="sc">0</span></div></div>
+  <div class="body">
+    <div class="mat-grid">
+      <button class="mat-card ml" onclick="openTemas('lengua')"><div class="mi">📝</div><h3>Lengua</h3><p>Poesía · Gramática</p></button>
+      <button class="mat-card mi2" onclick="openTemas('ingles')"><div class="mi">🇬🇧</div><h3>Inglés</h3><p>Language</p></button>
+      <button class="mat-card mm" onclick="openTemas('mate')"><div class="mi">🔢</div><h3>Matemática</h3><p>Maths</p></button>
+      <button class="mat-card ms" onclick="openTemas('sociales')"><div class="mi">🌎</div><h3>Cs. Sociales</h3><p>Social Studies</p></button>
+      <button class="mat-card mn" onclick="openTemas('naturales')"><div class="mi">💧</div><h3>Cs. Naturales</h3><p>Agua para el futuro</p></button>
+      <button class="mat-card mf" onclick="openTemas('finanzas')"><div class="mi">💰</div><h3>Finanzas</h3><p>Plata, ahorro y bancos</p></button>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESO -->
+<div id="s-progreso" class="screen">
+  <div class="topbar"><h2>📊 Mi progreso</h2></div>
+  <div class="body" id="progreso-body"></div>
+</div>
+
+<!-- TEMAS -->
+<div id="s-temas" class="screen">
+  <div class="topbar"><h2 id="temas-title">Temas</h2><div class="star-chip">⭐ <span class="sc">0</span></div></div>
+  <div class="body" id="temas-body"></div>
+</div>
+
+<!-- CONTENIDO -->
+<div id="s-con" class="screen">
+  <div class="topbar"><h2 id="con-title">Tema</h2><div class="star-chip">⭐ <span class="sc">0</span></div></div>
+  <div class="body" id="con-body"></div>
+</div>
+
+<!-- EXAMEN -->
+<div id="s-ex" class="screen">
+  <div class="topbar"><h2>Próximos exámenes</h2><div class="star-chip">⭐ <span class="sc">0</span></div></div>
+  <div class="body" id="ex-body"></div>
+</div>
+
+<!-- BILLETERA -->
+<div id="s-wallet" class="screen">
+  <div class="topbar"><h2>💰 Mi billetera</h2></div>
+  <div class="body" id="wallet-body"></div>
+</div>
+
+<!-- ADMIN -->
+<div id="s-admin" class="screen">
+  <div class="topbar"><h2>🔐 Panel de mamá</h2></div>
+  <div class="body" id="admin-body"></div>
+  <input type="file" id="import-file-input" accept="application/json" style="display:none" onchange="importBackup(event)">
+</div>
+
+<!-- AVATAR -->
+<div id="s-avatar" class="screen">
+  <div class="topbar"><h2>🎮 Mi personaje</h2><div class="star-chip">⭐ <span class="sc">0</span></div></div>
+  <div class="body" id="avatar-body"></div>
+</div>
+
+<script>
+// ===== CONFIG =====
+var PESO=50, DOLAR=1050, ADMIN_PIN='1234', DESEMP_MAX_STARS=10;
+
+// ===== ESTADO =====
+var totalStars=0, historial=[], completados={}, adminLog=[];
+var timeLog={}, pendingWritten=[], qWriteCount=0, desempenoLog=[], qEmptyWarned=false;
+var quizSource=[], repasoMode=false, repasoLog={};
+var datoLog={}, datoEmptyWarned=false;
+var lastBackup='', epoch=0;
+var streak={count:0,last:'',awarded:[]};
+var screenStack=['s-home'];
+var currentMode='ver', currentMat='', currentTemaIdx=0, currentTema=null, currentTemaTitle='';
+var qIdx=0, qScore=0, qAnswered=false, slideIdx=0;
+var wqIdx=0, wqAnswered=false;
+var avatar={skin:'#C68642',hair:'#1a1a1a',shirt:'#CC0000',pants:'#1a3a6b',shoes:'#111',acc:'⚽',bg:'river'};
+
+// ===== NAVEGACIÓN =====
+function showScreen(id,opts){
+  opts=opts||{};
+  var all=document.querySelectorAll('.screen');
+  for(var i=0;i<all.length;i++) all[i].classList.remove('active');
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0); updateStars();
+  if(!opts.skipStack){
+    if(screenStack[screenStack.length-1]!==id) screenStack.push(id);
+  }
+  var gb=document.getElementById('gback-btn'); if(gb) gb.classList.toggle('show', id!=='s-home');
+  var gh=document.getElementById('ghome-btn'); if(gh) gh.classList.toggle('show', id!=='s-home');
+  if(id==='s-admin'){ pauseSessionTimer(); if(cloudActive()) cloudSync().then(function(){ var a=document.getElementById('s-admin'); if(a&&a.classList.contains('active')&&document.getElementById('admin-body').innerHTML) cloudRefreshUI(); }); } else { resumeSessionTimer(); }
+}
+function goBack(){
+  stopSpeech();
+  if(screenStack.length>1) screenStack.pop();
+  var prev=screenStack.length>0?screenStack[screenStack.length-1]:'s-home';
+  showScreen(prev,{skipStack:true});
+}
+function goHome(){
+  stopSpeech();
+  screenStack=['s-home'];
+  showScreen('s-home',{skipStack:true});
+}
+function pipoSay(msg){
+  var t=document.getElementById('pipo-toast');
+  if(!t){ t=document.createElement('div'); t.id='pipo-toast'; t.className='pipo-toast'; document.body.appendChild(t); }
+  t.textContent='🦉 '+msg;
+  t.classList.add('show');
+  clearTimeout(window._pipoToastTO);
+  window._pipoToastTO=setTimeout(function(){t.classList.remove('show');},3400);
+}
+function openMat(){
+  document.getElementById('mat-title').textContent='📚 Elegí una materia';
+  showScreen('s-mat');
+}
+function isLocked(mat,i){
+  if(i===0) return false;
+  return !completados[mat+'_'+(i-1)];
+}
+function lockedTip(){ pipoSay('Primero completá el tema anterior para desbloquear este 🔒. ¡Vas bien, seguí así!'); }
+function openTemas(mat){
+  currentMat=mat;
+  var data=DATOS[mat];
+  document.getElementById('temas-title').textContent=data.nombre;
+  var html='<div class="ptip"><div class="pe">🦉</div><p>Elegí un tema. <b>Cada quiz da estrellas solo la primera vez.</b> Los temas se desbloquean en orden 🔒→🔓.</p></div>';
+  for(var i=0;i<data.temas.length;i++){
+    var t=data.temas[i], key=mat+'_'+i, done=completados[key], locked=isLocked(mat,i);
+    var cls='tema-item'+(done?' done':'')+(locked?' locked':'');
+    var onclick=locked?'lockedTip()':('openTema(\''+mat+'\','+i+')');
+    var badge=locked?'<div class="te">🔒</div>':(done?'<div class="te ok">✓ '+done.score+'/'+done.total+'</div>':'<div class="te">⭐'+t.stars+'</div>');
+    html+='<button class="'+cls+'" onclick="'+onclick+'">' +
+      '<div class="tn'+(done?' ok':'')+(locked?' locked':'')+'">'+(done?'✓':(locked?'🔒':(i+1)))+'</div>' +
+      '<div class="ti"><h3>'+t.titulo+'</h3><p>'+t.sub+'</p></div>' +
+      badge +
+      '</button>';
+  }
+  document.getElementById('temas-body').innerHTML=html;
+  showScreen('s-temas');
+}
+function openTema(mat,idx){
+  if(isLocked(mat,idx)){ lockedTip(); return; }
+  currentMat=mat; currentTemaIdx=idx;
+  currentTema=DATOS[mat].temas[idx]; currentTemaTitle=currentTema.titulo;
+  document.getElementById('con-title').textContent=currentTema.titulo;
+  buildContenido(); showScreen('s-con');
+}
+
+// ===== CONTENIDO =====
+function buildContenido(){
+  var t=currentTema, hasJ=t.juegos&&t.juegos.length>0, hasM=t.mathVisual, hasV=t.videos&&t.videos.length>0;
+  var tabs='<div class="tabs">' +
+    '<button class="tab on" id="tab-anim" onclick="switchTab(\'anim\')">✨ Animación</button>' +
+    '<button class="tab" id="tab-info" onclick="switchTab(\'info\')">🗺️ Info</button>' +
+    (hasM?'<button class="tab" id="tab-math" onclick="switchTab(\'math\')">📐 Visual</button>':'')+
+    (hasV?'<button class="tab" id="tab-vids" onclick="switchTab(\'vids\')">▶️ Videos</button>':'')+
+    (hasJ?'<button class="tab" id="tab-juegos" onclick="switchTab(\'juegos\')">🎮 Juegos</button>':'')+
+    '<button class="tab" id="tab-quiz" onclick="switchTab(\'quiz\')">✏️ Quiz</button>' +
+    '</div>';
+  document.getElementById('con-body').innerHTML=tabs+
+    '<div id="tc-anim" class="tab-content on">'+buildAnim()+'</div>'+
+    '<div id="tc-info" class="tab-content">'+buildInfo()+'</div>'+
+    (hasM?'<div id="tc-math" class="tab-content">'+buildMathVisual()+'</div>':'')+
+    (hasV?'<div id="tc-vids" class="tab-content">'+buildVideos()+'</div>':'')+
+    (hasJ?'<div id="tc-juegos" class="tab-content">'+buildJuegos()+'</div>':'')+
+    '<div id="tc-quiz" class="tab-content"></div>';
+}
+function switchTab(name){
+  stopSpeech();
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on');});
+  document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('on');});
+  var tel=document.getElementById('tab-'+name); if(tel) tel.classList.add('on');
+  var cel=document.getElementById('tc-'+name); if(cel) cel.classList.add('on');
+  if(name==='quiz') buildQuiz();
+}
+
+// ===== ANIMACIÓN =====
+function buildAnim(){
+  var t=currentTema; slideIdx=0;
+  var slides='', dots='';
+  for(var i=0;i<t.cards.length;i++){
+    var c=t.cards[i];
+    slides+='<div class="slide'+(i===0?' on':'')+'"><div class="s-ico">'+c.e+'</div><div class="s-tit">'+c.t+'</div><div class="s-txt">'+c.d.replace(/\n/g,'<br>')+'</div></div>';
+    dots+='<div class="sdot'+(i===0?' on':'')+'"></div>';
+  }
+  return '<button class="speak-btn" id="speak-btn" onclick="toggleSpeak()">🔊 <span id="speak-lbl">Escuchar este tema</span></button>'+
+    '<div class="slideshow">'+
+    '<div id="slides-wrap">'+slides+'</div>'+
+    '<div class="slide-nav">'+
+    '<button onclick="prevSlide()">← Ant.</button>'+
+    '<div class="slide-dots" id="slide-dots">'+dots+'</div>'+
+    '<span class="slide-counter" id="slide-ctr">1/'+t.cards.length+'</span>'+
+    '<button onclick="nextSlide()">Sig. →</button>'+
+    '</div></div>'+
+    '<button class="btn-p" style="margin-top:.75rem" onclick="switchTab(\'quiz\')">✏️ Hacer el quiz — ganar ⭐'+t.stars+'</button>';
+}
+function goSlide(n){
+  var total=currentTema.cards.length; slideIdx=(n+total)%total;
+  document.querySelectorAll('.slide').forEach(function(s,i){s.classList.toggle('on',i===slideIdx);});
+  document.querySelectorAll('.sdot').forEach(function(d,i){d.classList.toggle('on',i===slideIdx);});
+  var ctr=document.getElementById('slide-ctr'); if(ctr) ctr.textContent=(slideIdx+1)+'/'+total;
+}
+function nextSlide(){goSlide(slideIdx+1);}
+function prevSlide(){goSlide(slideIdx-1);}
+
+// ===== DATO DEL DÍA (curiosidad + pregunta de criterio, no de memoria) =====
+var DATOS_CURIOSOS=[
+  {fact:'¿Sabías que el primer billete de papel que existió fue en China, hace más de 1000 años, porque las monedas de metal pesaban demasiado para cargarlas?',pregunta:'Si hoy desapareciera todo el dinero (billetes, monedas y tarjetas) por un día, ¿cómo harías para conseguir algo que necesitás? Contá tu idea.'},
+  {fact:'El agua que tomás hoy podría tener millones de años dando vueltas por el planeta — se recicla todo el tiempo entre océanos, nubes y ríos.',pregunta:'¿Por qué crees que es importante no desperdiciar agua, si de todos modos "vuelve" al ciclo del agua?'},
+  {fact:'Las recetas de cocina usan proporcionalidad todo el tiempo: si duplicás la cantidad de invitados, duplicás los ingredientes.',pregunta:'Si una receta para 4 personas usa 2 huevos y vinieran 10 personas, ¿cómo pensarías el cálculo? Contá tu razonamiento, no solo el resultado.'},
+  {fact:'Cuando Argentina declaró su independencia en 1816, todavía no existía un montón de los símbolos que hoy asociamos con el país — tardaron años en volverse compartidos por todos.',pregunta:'¿Por qué crees que a un país recién independizado le importa tanto tener símbolos propios, como una bandera o un himno?'},
+  {fact:'In English, small changes can completely change a comparison — words like "good, better, best" don\'t follow the normal rules!',pregunta:'Why do you think some words in English (and in Spanish!) don\'t follow the normal grammar rules? What\'s your theory?'},
+  {fact:'Muchas canciones que escuchás son en el fondo poemas con música — usan las mismas metáforas y rimas que ves en Lengua.',pregunta:'Pensá en una canción que te guste. ¿Encontrás alguna metáfora o comparación en la letra? Contá cuál te parece que es.'},
+  {fact:'El interés compuesto hace que la plata "crezca sola" con el tiempo — por eso hay quienes dicen que es una de las ideas más poderosas de las finanzas.',pregunta:'Si tuvieras que explicarle a un amigo por qué conviene empezar a ahorrar temprano en vez de tarde, ¿qué le dirías?'},
+  {fact:'Aunque la Tierra parece "el planeta azul" por toda el agua que tiene, el 97% es agua salada que no podemos tomar directamente.',pregunta:'¿Qué solución se te ocurre para que más lugares del mundo tengan acceso a agua dulce?'},
+  {fact:'Cuando repartís una pizza entre amigos que llegaron en distintos momentos y todos tienen que comer lo mismo, en la vida real estás resolviendo un problema de fracciones sin darte cuenta.',pregunta:'Imaginate que tenés que repartir una pizza en partes justas entre 5 amigos, pero 3 llegaron primero y ya empezaron a comer. ¿Cómo lo pensarías para que al final todos comieran lo mismo?'},
+  {fact:'El proyecto "Agua para el futuro" que ven en el cole existe porque en muchas partes del mundo el agua dulce se está volviendo escasa, no infinita como parece.',pregunta:'¿Qué cambiarías vos, en tu casa o en tu barrio, para cuidar mejor el agua?'}
+];
+function pickDatoDelDia(){
+  var start=new Date(2026,0,1);
+  var hoy=new Date(); hoy.setHours(0,0,0,0);
+  var dayIndex=Math.floor((hoy-start)/86400000);
+  var idx=((dayIndex%DATOS_CURIOSOS.length)+DATOS_CURIOSOS.length)%DATOS_CURIOSOS.length;
+  return DATOS_CURIOSOS[idx];
+}
+function todayKey(){ return new Date().toLocaleDateString('es-AR'); }
+function parseFechaAR(str){
+  var parts=(str||'').split('/');
+  if(parts.length!==3) return new Date();
+  return new Date(parseInt(parts[2],10), parseInt(parts[1],10)-1, parseInt(parts[0],10));
+}
+function buildDatoWrap(){
+  var wrap=document.getElementById('dato-wrap'); if(!wrap) return;
+  var d=pickDatoDelDia(), key=todayKey(), done=datoLog[key];
+  var html='<div class="dato-card"><p class="dato-label">🔍 DATO DEL DÍA</p><p class="dato-fact">'+d.fact+'</p>';
+  if(done){
+    html+='<div class="qwrite-pend" style="background:#DCFCE7;color:#166534">✅ Ya pensaste el dato de hoy — mañana traigo uno nuevo.</div>'+
+      '<p style="font-size:.76rem;color:var(--gris);margin-top:.6rem;font-style:italic">Lo que pensaste: "'+done.respuesta+'"</p>';
+  } else {
+    html+='<p class="dato-prompt">🤔 '+d.pregunta+'</p>'+
+      '<textarea class="qwrite-area" id="dato-input" placeholder="Contá lo que pensás — no hay una sola respuesta correcta..."></textarea>'+
+      '<button class="btn-p" onclick="submitDato()">Responder y ganar ⭐</button>';
+  }
+  html+='</div>';
+  wrap.innerHTML=html;
+}
+function submitDato(){
+  if(mamaReviewMode){ pipoSay('Estás en modo revisión — este dato es para que lo piense Salva 🙂'); return; }
+  var ta=document.getElementById('dato-input');
+  var texto=(ta.value||'').trim();
+  if(texto.length<8 && !datoEmptyWarned){
+    datoEmptyWarned=true;
+    pipoSay('Contame un poquito más lo que pensás — no hace falta que sea perfecto, solo tu idea 💭');
+    return;
+  }
+  var key=todayKey();
+  datoLog[key]={respuesta:texto||'(sin respuesta)',fecha:key};
+  addStars(1,'🔍 Dato del día');
+  saveState();
+  pipoSay('¡Me encantó tu idea! 🌟 Mañana traigo un dato nuevo.');
+  datoEmptyWarned=false;
+  buildDatoWrap();
+}
+
+// ===== VOZ (motor robusto con selección de voz y avisos de error) =====
+var ttsVoices=[];
+function loadVoices(){ if(window.speechSynthesis){ try{ ttsVoices=window.speechSynthesis.getVoices()||[]; }catch(e){} } }
+if(window.speechSynthesis){
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged=loadVoices;
+}
+function pickSpanishVoice(){
+  if(!ttsVoices||ttsVoices.length===0) loadVoices();
+  if(!ttsVoices||ttsVoices.length===0) return null;
+  var esVoices=ttsVoices.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf('es')===0;});
+  if(esVoices.length===0) return null;
+  var maleHints=['male','hombre','jorge','diego','carlos','pablo','javier','miguel','fernando','andrés','andres','juan','varón','varon'];
+  var male=esVoices.filter(function(v){var n=v.name.toLowerCase();return maleHints.some(function(h){return n.indexOf(h)>-1;});})[0];
+  if(male) return male;
+  var ar=esVoices.filter(function(v){return v.lang==='es-AR';})[0];
+  if(ar) return ar;
+  return esVoices[0];
+}
+function stripForSpeech(text){
+  if(!text) return '';
+  try{
+    return text.replace(/[\u{1F1E6}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{2300}-\u{23FF}]/gu,'').replace(/\s{2,}/g,' ').trim();
+  }catch(e){ return text; }
+}
+function speakText(text,onStart,onEnd){
+  if(!window.speechSynthesis){
+    pipoSay('Este navegador no tiene voz disponible. Probá con Chrome actualizado.');
+    if(onEnd) onEnd();
+    return;
+  }
+  try{
+    text=stripForSpeech(text);
+    window.speechSynthesis.cancel();
+    if(window.speechSynthesis.paused) window.speechSynthesis.resume();
+    var u=new SpeechSynthesisUtterance(text);
+    var v=pickSpanishVoice();
+    if(v) u.voice=v;
+    u.lang='es-AR'; u.rate=0.92; u.pitch=0.8;
+    if(onStart) u.onstart=onStart;
+    var ended=false;
+    var doEnd=function(){ if(ended) return; ended=true; if(onEnd) onEnd(); };
+    u.onend=doEnd;
+    u.onerror=function(){ pipoSay('No pude hablar 😅 — fijate que el volumen esté activado o probá con Chrome.'); doEnd(); };
+    window.speechSynthesis.speak(u);
+    // algunos navegadores (Chrome/Android) se "traban" en silencio si no hay resume periódico
+    setTimeout(function(){ if(window.speechSynthesis.speaking && window.speechSynthesis.paused) window.speechSynthesis.resume(); },250);
+  }catch(e){ pipoSay('No pude hablar 😅 — probá con Chrome actualizado.'); if(onEnd) onEnd(); }
+}
+function buildSpeechText(){
+  var t=currentTema, txt='Tema: '+t.titulo+'. ';
+  for(var i=0;i<t.cards.length;i++) txt+=t.cards[i].t+'. '+t.cards[i].d.replace(/\n/g,'. ')+'. ';
+  return txt;
+}
+function toggleSpeak(){
+  if(window.speechSynthesis&&window.speechSynthesis.speaking){stopSpeech();return;}
+  startSpeech();
+}
+function startSpeech(){
+  stopSpeech();
+  var btn=document.getElementById('speak-btn'), lbl=document.getElementById('speak-lbl');
+  speakText(buildSpeechText(),
+    function(){ if(btn)btn.classList.add('speaking'); if(lbl)lbl.textContent='Tocá para pausar'; },
+    function(){ if(btn)btn.classList.remove('speaking'); if(lbl)lbl.textContent='Escuchar este tema'; }
+  );
+}
+function stopSpeech(){
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  var btn=document.getElementById('speak-btn'), lbl=document.getElementById('speak-lbl');
+  if(btn) btn.classList.remove('speaking'); if(lbl) lbl.textContent='Escuchar este tema';
+  var gi=document.getElementById('greet-speak-ico'); if(gi) gi.classList.remove('speaking');
+}
+
+// ===== INFOGRAFÍA =====
+function buildInfo(){
+  var t=currentTema;
+  var h='<div class="flujo-wrap"><p>MAPA DEL TEMA</p><div class="flujo">';
+  t.flujo.forEach(function(f,i){h+='<span class="ftag">'+f+'</span>';if(i<t.flujo.length-1)h+='<span class="farr">→</span>';});
+  h+='</div></div>';
+  // Teoría extra si existe (contenido que NO está en la Animación)
+  if(t.teoria){
+    h+='<div style="background:#EEF2FF;border-radius:13px;padding:1rem;margin-top:.7rem">';
+    h+='<p style="font-size:.78rem;font-weight:800;color:#3730A3;margin-bottom:.5rem">📚 UN POQUITO MÁS (esto no está en la Animación)</p>';
+    h+=t.teoria;
+    h+='</div>';
+  } else {
+    h+='<div class="ptip" style="margin-top:.7rem"><div class="pe">🦉</div><p>El contenido completo de este tema ya lo viste en <b>✨ Animación</b>. Este mapa te sirve para repasar el orden de las ideas de un vistazo.</p></div>';
+  }
+  h+='<button class="btn-p" style="margin-top:.6rem" onclick="switchTab(\'quiz\')">✏️ Ir al Quiz</button>';
+  return h;
+}
+
+// ===== VISUAL MATEMÁTICA =====
+function buildMathVisual(){
+  var t=currentTema;
+  if(!t.mathVisual) return '';
+  var h='<div class="ptip"><div class="pe">🦉</div><p>Acá podés <b>ver los conceptos con dibujos y ejemplos</b>. Después anotá en papel lo que Pipo te pide.</p></div>';
+  h+=t.mathVisual;
+  return h;
+}
+
+// ===== VIDEOS (embebidos o externos) =====
+function buildVideos(){
+  var t=currentTema;
+  var h='<div class="ptip"><div class="pe">🦉</div><p>Los videos con 🎬 se reproducen <b>aquí adentro</b>. Los con 🔗 abren en otra pestaña.</p></div>';
+  t.videos.forEach(function(v){
+    if(v.embed){
+      h+='<p class="vid-label">🎬 '+v.t+'</p>';
+      h+='<div class="vid-embed"><iframe src="https://www.youtube.com/embed/'+v.embed+'?rel=0&modestbranding=1" allowfullscreen></iframe></div>';
+      h+='<p class="vid-meta">'+v.c+' · '+v.d+'</p>';
+    } else {
+      h+='<div class="vid-card" onclick="window.open(\''+v.url+'\',\'_blank\')">'+
+        '<div class="v-thumb">'+v.e+'<div class="v-play">▶</div></div>'+
+        '<div class="v-info"><h4>🔗 '+v.t+'</h4><p>'+v.c+'</p><span class="v-dur">⏱ '+v.d+'</span></div>'+
+        '</div>';
+    }
+  });
+  h+='<button class="btn-s" onclick="switchTab(\'quiz\')">Listo, hacer el quiz ✏️</button>';
+  return h;
+}
+
+// ===== JUEGOS =====
+function buildJuegos(){
+  var t=currentTema;
+  var h='<div class="ptip"><div class="pe">🦉</div><p>Jugá cada juego. <b>Cada juego completado = ⭐ 1 estrella extra.</b></p></div>';
+  t.juegos.forEach(function(j){
+    h+='<button class="j-card" onclick="playGame(\''+j.url+'\')"><div class="je">'+j.e+'</div><div class="ji"><h4>'+j.t+'</h4><p>'+j.d+'</p></div><div class="jb">⭐ +1</div></button>';
+  });
+  h+='<button class="btn-s" onclick="switchTab(\'quiz\')">Hice los juegos → quiz ✏️</button>';
+  return h;
+}
+function playGame(url){addStars(1,'Juego: '+currentTemaTitle);window.open(url,'_blank');}
+
+// ===== QUIZ =====
+function findPendingWritten(materia,tema,pregunta){
+  for(var i=0;i<pendingWritten.length;i++){
+    var w=pendingWritten[i];
+    if(w.materia===materia&&w.tema===tema&&w.pregunta===pregunta) return w;
+  }
+  return null;
+}
+function buildRubricChecklist(rubric){
+  if(!rubric) return '';
+  var items=rubric.split('·').map(function(s){return s.replace(/^\s*✅\s*/,'').trim();}).filter(Boolean);
+  var h='<div class="qrubric"><p style="margin:0 0 .4rem">📋 Antes de entregar, revisá:</p>';
+  items.forEach(function(it){
+    h+='<label style="display:flex;align-items:flex-start;gap:.4rem;margin-bottom:.3rem;cursor:pointer;font-weight:600"><input type="checkbox" style="width:16px;height:16px;flex-shrink:0;margin-top:.1rem"><span>'+it+'</span></label>';
+  });
+  h+='</div>';
+  return h;
+}
+function buildQuiz(){
+  var key=currentMat+'_'+currentTemaIdx, done=completados[key];
+  var cont=document.getElementById('tc-quiz');
+  repasoMode=false;
+  if(done){
+    var pct=Math.round(done.score/done.total*100);
+    var writeQs=currentTema.quiz.filter(function(q){return (q.type||'mc')==='write';});
+    var writeHtml='';
+    writeQs.forEach(function(q){
+      var entry=findPendingWritten(currentMat,currentTemaTitle,q.q);
+      if(entry&&entry.estado==='corregida'){
+        writeHtml+='<div class="qwrite-pend">✍️ Tu redacción ya fue corregida por mamá: '+entry.nota+'/5 ⭐</div>';
+      } else {
+        var tieneTexto=entry&&entry.respuesta&&entry.respuesta!=='(sin respuesta)';
+        writeHtml+='<div class="qrubric">✍️ Redacción pendiente de mamá'+(tieneTexto?' — ya la enviaste, podés mejorarla mientras no la corrija.':' — todavía no la escribiste.')+'</div>'+
+          '<button class="btn-s" onclick="openWriteEdit(\''+q.q.replace(/'/g,"\\'")+'\')">✍️ '+(tieneTexto?'Editar mi redacción':'Escribir mi redacción')+'</button>';
+      }
+    });
+    var vecesRepaso=repasoLog[key]||0;
+    var isBonus=currentMat==='bonus';
+    cont.innerHTML='<div class="ya-comp"><p>✅ Ya completaste este quiz</p><div class="ysc">'+done.score+'/'+done.total+' — '+pct+'%</div><p style="font-size:.75rem">'+done.fecha+'</p></div>'+
+      writeHtml+
+      '<div class="ptip"><div class="pe">🦉</div><p>Las estrellas de este tema ya fueron acreditadas. <b>No se puede repetir para ganar más.</b> Pero podés repasarlo todas las veces que quieras antes del examen.</p></div>'+
+      '<button class="btn-p" onclick="startRepasoQuiz()">🔁 Repasar este tema'+(vecesRepaso>0?' (ya repasado '+vecesRepaso+' vez/veces)':'')+'</button>'+
+      (isBonus?'':'<button class="btn-s" onclick="switchTab(\'anim\')">📖 Repasar el contenido</button>')+
+      '<button class="btn-s" onclick="'+(isBonus?'goHome()':"showScreen('s-temas')")+'">← Volver'+(isBonus?' al inicio':' a temas')+'</button>';
+    return;
+  }
+  quizSource=currentTema.quiz;
+  qIdx=0; qScore=0; qAnswered=false; qWriteCount=0; qEmptyWarned=false; renderPregunta(cont);
+}
+function openWriteEdit(pregunta){
+  var q=null;
+  for(var i=0;i<currentTema.quiz.length;i++){ if((currentTema.quiz[i].type||'mc')==='write'&&currentTema.quiz[i].q===pregunta){ q=currentTema.quiz[i]; break; } }
+  if(!q) return;
+  var existing=findPendingWritten(currentMat,currentTemaTitle,q.q);
+  var texto=(existing&&existing.respuesta!=='(sin respuesta)')?existing.respuesta:'';
+  var cont=document.getElementById('tc-quiz');
+  cont.innerHTML='<div class="quiz-wrap"><div class="quiz-q">'+q.q+'</div>'+
+    buildRubricChecklist(q.rubric)+
+    '<button class="btn-s" onclick="showWriteHint(true)" style="margin-bottom:.5rem">🆘 Necesito una ayudita</button>'+
+    '<div id="qhintbox"></div>'+
+    '<textarea class="qwrite-area" id="editwritearea" placeholder="Escribí tu respuesta acá...">'+texto+'</textarea>'+
+    '<button class="btn-p" onclick="submitWriteEdit(\''+q.q.replace(/'/g,"\\'")+'\')">'+(texto?'Actualizar ✓':'Entregar ✓')+'</button>'+
+    '<button class="btn-s" onclick="buildQuiz()">← Volver</button></div>';
+  window._editHintQ=q;
+}
+function submitWriteEdit(pregunta){
+  var q=null;
+  for(var i=0;i<currentTema.quiz.length;i++){ if((currentTema.quiz[i].type||'mc')==='write'&&currentTema.quiz[i].q===pregunta){ q=currentTema.quiz[i]; break; } }
+  if(!q) return;
+  var ta=document.getElementById('editwritearea');
+  var texto=(ta.value||'').trim();
+  if(!texto){ pipoSay('Escribí aunque sea una idea chiquita antes de enviar 💪'); return; }
+  var existing=findPendingWritten(currentMat,currentTemaTitle,q.q);
+  if(existing){ existing.respuesta=texto; existing.fecha=new Date().toLocaleDateString('es-AR'); }
+  else { pendingWritten.unshift({materia:currentMat,tema:currentTemaTitle,pregunta:q.q,rubric:q.rubric||'',respuesta:texto,fecha:new Date().toLocaleDateString('es-AR'),estado:'pendiente',nota:null}); }
+  saveState();
+  pipoSay('¡Listo! Mamá va a ver tu redacción actualizada 🎉');
+  buildQuiz();
+}
+function showWriteHint(isEdit){
+  var q=isEdit?window._editHintQ:currentTema.quiz[qIdx];
+  var box=document.getElementById('qhintbox'); if(!box||!q) return;
+  box.innerHTML='<div class="qrubric" style="background:#FEF9C3">💡 Para empezar, podés escribir algo así:<br><i>'+(q.starter?q.starter.replace(/\n/g,'<br>'):'Contá con tus palabras lo que entendiste del tema. ¡No hace falta que sea perfecto!')+'</i></div>';
+}
+function pickPhrase(arr){return arr[Math.floor(Math.random()*arr.length)];}
+var PIPO_CORRECT=['🎉 ¡Gol de Pipo! Correcto.','⛏️ ¡Crafteaste la respuesta perfecta!','🏆 ¡Como River en la Libertadores! Correcto.','💎 ¡Encontraste el diamante! Respuesta correcta.','🔥 ¡Imparable! Correcto.','⚽ ¡La metiste en el ángulo! Correcto.'];
+var PIPO_INCORRECT_PREFIX=['🧱 Casi, pero no. Era: ','😅 Le pegaste al palo. Era: ','🌊 Te faltó por poquito. Era: ','📚 Todavía no — la correcta era: '];
+var PIPO_RES_HIGH=['¡Golazo, Salva! ⚽🔴','¡Sos un crack, como Millonarios en cancha! 🏆','¡Diamante nivel PRO! ⛏️💎','¡Excelente, Salva!'];
+var PIPO_RES_MED=['¡Bien jugado! Podés mejorar 💪','Vas por buen camino, como armando una base en Minecraft 🧱','¡Casi imbatible! Seguí así 🥈'];
+var PIPO_RES_LOW=['Seguí practicando, todo crack empezó así 🌱','En Minecraft también hay que intentar varias veces ⛏️','Repasá la animación y volvés más fuerte 📚'];
+function renderPregunta(cont){
+  var q=quizSource[qIdx], tot=quizSource.length, type=q.type||'mc';
+  var html='<div class="quiz-wrap">'+
+    '<div class="quiz-top"><span>'+(repasoMode?'🔁 ':'')+(qIdx+1)+'/'+tot+'</span><div class="qpbar"><div class="qpfill" style="width:'+Math.round(qIdx/tot*100)+'%"></div></div><span>'+(repasoMode?'✅ '+qScore:'⭐ '+qScore)+'</span></div>'+
+    '<div class="quiz-q">'+q.q+'</div>';
+  if(type==='mc'){
+    html+='<div class="quiz-opts">';
+    q.o.forEach(function(o,i){html+='<button class="qopt" id="qo'+i+'" onclick="checkA('+i+','+q.ok+')">'+o+'</button>';});
+    html+='</div>';
+  } else if(type==='num'){
+    html+='<input type="number" inputmode="decimal" class="qnum-inp" id="qnuminp" placeholder="Tu respuesta">'+
+      '<button class="btn-p" id="qnumbtn" onclick="checkNum()">Verificar ✓</button>';
+  } else if(type==='write'){
+    qEmptyWarned=false;
+    html+=buildRubricChecklist(q.rubric)+
+      '<button class="btn-s" onclick="showWriteHint(false)" style="margin-bottom:.5rem">🆘 Necesito una ayudita</button>'+
+      '<div id="qhintbox"></div>'+
+      '<textarea class="qwrite-area" id="qwritearea" placeholder="Escribí tu respuesta acá..."></textarea>'+
+      '<button class="btn-p" id="qwritebtn" onclick="checkWrite()">Entregar ✓</button>';
+  }
+  html+='<div class="qfb" id="qfb"></div><button class="qnext" id="qnext" onclick="nextP()">Siguiente →</button></div>';
+  cont.innerHTML=html;
+}
+function checkA(idx,correct){
+  if(qAnswered) return; qAnswered=true;
+  for(var i=0;i<quizSource[qIdx].o.length;i++){var b=document.getElementById('qo'+i);if(b)b.disabled=true;}
+  document.getElementById('qo'+correct).classList.add('ok');
+  var fb=document.getElementById('qfb'), nxt=document.getElementById('qnext');
+  if(idx===correct){qScore++;document.getElementById('qo'+idx).classList.add('ok');fb.textContent=pickPhrase(PIPO_CORRECT);fb.className='qfb on ok';}
+  else{document.getElementById('qo'+idx).classList.add('mal');fb.textContent=pickPhrase(PIPO_INCORRECT_PREFIX)+'"'+quizSource[qIdx].o[correct]+'".';fb.className='qfb on mal';}
+  nxt.className='qnext on';
+}
+function checkNum(){
+  if(qAnswered) return; qAnswered=true;
+  var q=quizSource[qIdx];
+  var inp=document.getElementById('qnuminp');
+  var val=parseFloat((inp.value||'').replace(',','.'));
+  var tol=(q.tol!==undefined)?q.tol:0.001;
+  var ok=!isNaN(val)&&Math.abs(val-q.ok)<=tol;
+  inp.disabled=true; var bt=document.getElementById('qnumbtn'); if(bt) bt.disabled=true;
+  var fb=document.getElementById('qfb'), nxt=document.getElementById('qnext');
+  if(ok){qScore++;fb.textContent=pickPhrase(PIPO_CORRECT)+' La respuesta era '+q.ok+'.';fb.className='qfb on ok';}
+  else{fb.textContent='❌ La respuesta correcta era '+q.ok+'. Revisá el tema.';fb.className='qfb on mal';}
+  nxt.className='qnext on';
+}
+function checkWrite(){
+  if(qAnswered) return;
+  var q=quizSource[qIdx];
+  var ta=document.getElementById('qwritearea');
+  var texto=(ta.value||'').trim();
+  if(!texto && !qEmptyWarned){
+    qEmptyWarned=true;
+    pipoSay('Escribí aunque sea una idea chiquita — después la podés mejorar 💪. Si preferís, tocá "Necesito una ayudita".');
+    return;
+  }
+  qAnswered=true;
+  ta.disabled=true; var bt=document.getElementById('qwritebtn'); if(bt) bt.disabled=true;
+  qWriteCount++;
+  pendingWritten.unshift({materia:currentMat,tema:currentTemaTitle,pregunta:q.q,rubric:q.rubric||'',respuesta:texto||'(sin respuesta)',fecha:new Date().toLocaleDateString('es-AR'),estado:'pendiente',nota:null});
+  saveState();
+  var fb=document.getElementById('qfb'), nxt=document.getElementById('qnext');
+  fb.innerHTML='✍️ ¡Entregado! Mamá lo va a corregir en el Panel de mamá con una rúbrica.';
+  fb.className='qfb on ok';
+  nxt.className='qnext on';
+}
+function nextP(){qIdx++;qAnswered=false;var c=document.getElementById('tc-quiz');if(qIdx<quizSource.length)renderPregunta(c);else showRes(c);}
+function incRepaso(mat,idx){
+  var k=mat+'_'+idx;
+  repasoLog[k]=(repasoLog[k]||0)+1;
+  saveState();
+}
+function startRepasoQuiz(){
+  var pool=currentTema.quiz.filter(function(q){return (q.type||'mc')!=='write';});
+  if(pool.length===0){ pipoSay('Este tema todavía no tiene preguntas de opción múltiple o numéricas para repasar.'); return; }
+  repasoMode=true;
+  quizSource=pool.slice().sort(function(){return Math.random()-.5;});
+  qIdx=0; qScore=0; qAnswered=false;
+  renderPregunta(document.getElementById('tc-quiz'));
+}
+function showRes(cont){
+  var autoQs=quizSource.filter(function(q){return (q.type||'mc')!=='write';});
+  var tot=autoQs.length||1, pct=Math.round(qScore/tot*100);
+  var emoji=pct>=80?'🏆':pct>=60?'💪':'📚';
+  var phrase=pickPhrase(pct>=80?PIPO_RES_HIGH:pct>=60?PIPO_RES_MED:PIPO_RES_LOW);
+  if(repasoMode){
+    incRepaso(currentMat,currentTemaIdx);
+    cont.innerHTML='<div class="res"><div class="rico">🔁</div><h2>'+phrase+
+      '</h2><div class="rsc">'+qScore+'<small> / '+tot+'</small></div>'+
+      '<div class="qwrite-pend" style="background:#E0F2FE;color:#075985">🔁 Modo repaso — esto no suma estrellas, es para que se te quede mejor antes del examen.</div>'+
+      '<button class="btn-p" onclick="startRepasoQuiz()">🔁 Repasar de nuevo</button>'+
+      '<button class="btn-s" onclick="buildQuiz()">← Volver</button></div>';
+    repasoMode=false;
+    return;
+  }
+  var key=currentMat+'_'+currentTemaIdx;
+  var isBonus=currentMat==='bonus';
+  completados[key]={score:qScore,total:tot,fecha:new Date().toLocaleDateString('es-AR')};
+  if(!isBonus) logAdmin(currentTemaTitle,qScore,tot);
+  var earned=pct>=80?currentTema.stars:pct>=60?Math.floor(currentTema.stars*.6):1;
+  if(earned>0) addStars(earned,currentTema.titulo);
+  var pesos=earned*PESO, dl=(pesos/DOLAR).toFixed(3);
+  var writeNote=qWriteCount>0?'<div class="qwrite-pend">✍️ Entregaste '+qWriteCount+' redacción(es). Mamá te va a dar estrellas extra cuando las corrija en su panel.</div>':'';
+  var earnHtml=pct>=60
+    ?'<div class="earn-box"><div class="es">⭐</div><div class="en">+'+earned+' estrellas</div><p>= $'+pesos.toLocaleString('es-AR')+' para tu billetera</p><small>≈ u$s '+dl+'</small></div>'
+    :'<div class="no-earn"><p>📚 Ganás ⭐1 por intentarlo.<br>'+(isBonus?'Podés volver a intentarlo repasando.':'Estudiá el tema — el quiz no se puede repetir. Podés volver después a repasarlo sin límite.')+'</p></div>';
+  var navBtns=isBonus
+    ?'<button class="btn-s" onclick="goHome()">🏠 Volver al inicio</button>'
+    :'<button class="btn-s" onclick="switchTab(\'anim\')">📖 Repasar el contenido</button><button class="btn-s" onclick="showScreen(\'s-temas\')">← Volver a temas</button>';
+  cont.innerHTML='<div class="res"><div class="rico">'+emoji+'</div><h2>'+phrase+
+    '</h2><div class="rsc">'+qScore+'<small> / '+tot+'</small></div>'+earnHtml+writeNote+
+    '<button class="btn-p" onclick="openWallet()">💰 Ver mi billetera</button>'+navBtns+'</div>';
+  saveState();
+}
+
+// ===== ESTRELLAS =====
+function addStars(n,desc){
+  totalStars+=n;
+  historial.unshift({n:n,desc:desc,f:new Date().toLocaleDateString('es-AR')});
+  if(historial.length>30) historial=historial.slice(0,30);
+  updateStars();
+}
+function updateStars(){
+  var p=totalStars*PESO, dl=(p/DOLAR).toFixed(2);
+  document.querySelectorAll('.sc').forEach(function(e){e.textContent=totalStars;});
+  var hs=document.getElementById('h-st');if(hs)hs.textContent=totalStars;
+  var hp=document.getElementById('h-ps');if(hp)hp.textContent=p.toLocaleString('es-AR');
+  var hd=document.getElementById('h-dl');if(hd)hd.textContent=dl;
+}
+
+// ===== CALENDARIO HOME =====
+var EXAMENES=[
+  {mat:'Lengua',dia:'06',mes:'OCT',anio:2026,temas:'Poesía, sustantivos, adjetivos',recursos:[]},
+  {mat:'Inglés',dia:'09',mes:'OCT',anio:2026,temas:'Comparatives, superlatives, writing',recursos:[
+    {e:'🎮',t:'Comparative or Superlative? — Wordwall',url:'https://wordwall.net/es/resource/75759311/english/comparative-or-superlative'},
+    {e:'🕹️',t:'Comparative & Superlative 2 — Wordwall',url:'https://wordwall.net/es/resource/95855840/ingl%C3%A9s/comparative-and-superlative-adjectives'},
+    {e:'🎯',t:'Comparatives & Superlatives 3 — Wordwall',url:'https://wordwall.net/es/resource/98150356/english/comparative-and-superlative-adjectives-2'}
+  ]},
+  {mat:'Matemática',dia:'13',mes:'OCT',anio:2026,temas:'Proporcionalidad, gráficos, fracciones',recursos:[]},
+  {mat:'Sociales',dia:'16',mes:'OCT',anio:2026,temas:'Independencia, Congreso de Tucumán',recursos:[]},
+  {mat:'Naturales',dia:'20',mes:'OCT',anio:2026,temas:'Ciclo del agua, hidrosfera',recursos:[
+    {e:'▶️',t:'Ciclo del agua — EMOS',url:'https://www.youtube.com/watch?v=Gs1jOv_8mpY'}
+  ]}
+];
+var MESES_MAP={ENE:0,FEB:1,MAR:2,ABR:3,MAY:4,JUN:5,JUL:6,AGO:7,SEP:8,OCT:9,NOV:10,DIC:11};
+function diasHasta(e){
+  var hoy=new Date(); hoy.setHours(0,0,0,0);
+  var fecha=new Date(e.anio, MESES_MAP[e.mes], parseInt(e.dia,10));
+  return Math.round((fecha-hoy)/86400000);
+}
+var MAT2KEY={'Lengua':'lengua','Inglés':'ingles','Matemática':'mate','Sociales':'sociales','Naturales':'naturales'};
+function buildCalendar(){
+  var wrap=document.getElementById('exam-cal-wrap');
+  if(!wrap) return;
+  var html='<p style="font-size:.75rem;font-weight:800;color:var(--gris);margin-bottom:.45rem;padding:0 .1rem">📅 PRÓXIMOS EXÁMENES</p><div class="exam-scroll">';
+  EXAMENES.forEach(function(e,i){
+    var d=diasHasta(e), cls=d<=7?'ec-red':d<=14?'ec-yellow':'ec-green';
+    html+='<div class="exam-chip '+cls+'" onclick="showPlanExamen('+i+');showScreen(\'s-ex\')" title="'+e.temas+'">'+
+      '<div class="ec-mat">'+e.mat+'</div>'+
+      '<div class="ec-dia">'+e.dia+'</div>'+
+      '<div class="ec-mes">'+e.mes+'</div>'+
+      '<div class="ec-dias">'+(d<3?'⏱️ ':'~')+d+' días</div>'+
+      '</div>';
+  });
+  html+='</div>';
+  wrap.innerHTML=html;
+  buildExamModeBanner();
+}
+function buildExamModeBanner(){
+  var wrap=document.getElementById('exmode-wrap'); if(!wrap) return;
+  var urgent=null;
+  var urgentDias=0;
+  EXAMENES.forEach(function(e){ var d=diasHasta(e); if(d<3 && d>=0 && !urgent){ urgent=e; urgentDias=d; } });
+  if(!urgent){ wrap.innerHTML=''; return; }
+  wrap.innerHTML='<button class="exmode-banner" onclick="startExamMode(\''+urgent.mat+'\')"><div class="ee">⏱️</div><div><b>¡Modo Examen! '+urgent.mat+' es en '+urgentDias+' día(s)</b><span>Tocá para hacer un simulacro cronometrado</span></div></button>';
+}
+var BRIDGE_QUIZ=[
+  {q:'In English, how do you say "ciclo del agua"?',o:['Water cycle','Water round','Cycle of water drop','Aqua cycle'],ok:0},
+  {type:'num',q:'Si el 97% del agua de la Tierra es salada, ¿qué porcentaje es agua dulce? (solo el número)',ok:3},
+  {q:'El EMOS potabiliza el agua para que llegue limpia a las casas. ¿Por qué es un tema importante para el FUTURO, no solo para hoy?',o:['Porque el agua dulce es limitada y hay que cuidarla para que alcance después','Porque el agua nunca se puede reciclar','Porque solo importa en verano','Porque el agua salada es más importante que la dulce'],ok:0},
+  {type:'num',q:'Un pueblo gasta $2.000 por mes cuidando el agua limpia. Si ahorran agua y bajan el gasto a $1.500, ¿cuánto ahorraron? (solo el número)',ok:500},
+  {q:'Complete: "Precipitation is when water falls as ___."',o:['rain, snow or hail','only rain','only snow','vapour'],ok:0},
+  {q:'El "Congreso de Tucumán" (1816) es cuando Argentina declaró su...',o:['Independencia','Constitución','Primer presidente','Primera guerra'],ok:0},
+  {q:'Si quisieras describir el Congreso de Tucumán como "la cuna de la libertad", ¿qué recurso literario estás usando?',o:['Metáfora','Rima','Sustantivo propio','Adjetivo posesivo'],ok:0}
+];
+function startBridgeQuiz(){
+  currentMat='bonus'; currentTemaIdx='bridge';
+  currentTema={titulo:'🌉 Puente de Materias',stars:4,quiz:BRIDGE_QUIZ};
+  currentTemaTitle=currentTema.titulo;
+  document.getElementById('con-title').textContent='🌉 Puente de Materias';
+  document.getElementById('con-body').innerHTML='<div class="ptip"><div class="pe">🦉</div><p>Estas preguntas conectan varias materias a la vez — Naturales, Sociales, Inglés, Matemática y Finanzas — igual que cuando en el cole todo gira en torno al proyecto <b>"Agua para el futuro"</b>. ¡Es un bonus!</p></div><div id="tc-quiz"></div>';
+  showScreen('s-con');
+  buildQuiz();
+}
+var examTimeLeft=0, examTimer=null, examQuestions=[], examIdx=0, examScore=0, examMatName='', examKey='', examPractice=false;
+function startExamMode(matName,practice){
+  var key=MAT2KEY[matName] || (DATOS[matName]?matName:null);
+  if(!key){ pipoSay('No encontré preguntas para repasar de '+matName+'.'); return; }
+  var data=DATOS[key];
+  examKey=key;
+  examMatName=data.nombre;
+  examPractice=!!practice;
+  examQuestions=[];
+  data.temas.forEach(function(t){ t.quiz.forEach(function(q){ if((q.type||'mc')==='mc') examQuestions.push(q); }); });
+  examQuestions=examQuestions.sort(function(){return Math.random()-.5;}).slice(0,10);
+  if(examQuestions.length===0){ pipoSay('Todavía no hay preguntas cargadas para repasar de '+data.nombre+'.'); return; }
+  examIdx=0; examScore=0; examTimeLeft=8*60;
+  showScreen('s-con');
+  renderExamScreen();
+  clearInterval(examTimer);
+  if(!examPractice) examTimer=setInterval(examTick,1000);
+}
+function examTick(){
+  examTimeLeft--;
+  var el=document.getElementById('exam-clock'); if(el) el.textContent=fmtTime(Math.max(0,examTimeLeft));
+  if(examTimeLeft<=0){ clearInterval(examTimer); finishExamMode(); }
+}
+function renderExamScreen(){
+  document.getElementById('con-title').textContent=(examPractice?'🔁 Repaso mezclado — ':'⏱️ Simulacro — ')+examMatName;
+  var q=examQuestions[examIdx];
+  var clockHtml=examPractice?'<span>🔁 Repaso</span>':'<span>⏱️ <b id="exam-clock">'+fmtTime(examTimeLeft)+'</b></span>';
+  var html='<div class="quiz-wrap"><div class="quiz-top">'+clockHtml+'<div class="qpbar"><div class="qpfill" style="width:'+Math.round(examIdx/examQuestions.length*100)+'%"></div></div><span>'+(examIdx+1)+'/'+examQuestions.length+'</span></div>'+
+    '<div class="quiz-q">'+q.q+'</div><div class="quiz-opts">';
+  q.o.forEach(function(o,i){html+='<button class="qopt" id="eqo'+i+'" onclick="checkExamA('+i+','+q.ok+')">'+o+'</button>';});
+  html+='</div><div class="qfb" id="eqfb"></div><button class="qnext" id="eqnext" onclick="nextExamQ()">Siguiente →</button></div>';
+  document.getElementById('con-body').innerHTML=html;
+}
+function checkExamA(idx,correct){
+  for(var i=0;i<examQuestions[examIdx].o.length;i++){var b=document.getElementById('eqo'+i);if(b)b.disabled=true;}
+  var fb=document.getElementById('eqfb'), nxt=document.getElementById('eqnext');
+  document.getElementById('eqo'+correct).classList.add('ok');
+  if(idx===correct){examScore++;fb.textContent=pickPhrase(PIPO_CORRECT);fb.className='qfb on ok';}
+  else{document.getElementById('eqo'+idx).classList.add('mal');fb.textContent='❌ Era: "'+examQuestions[examIdx].o[correct]+'"';fb.className='qfb on mal';}
+  nxt.className='qnext on';
+}
+function nextExamQ(){
+  examIdx++;
+  if(examIdx<examQuestions.length) renderExamScreen();
+  else finishExamMode();
+}
+function finishExamMode(){
+  clearInterval(examTimer);
+  var tot=examQuestions.length||1, pct=Math.round(examScore/tot*100);
+  if(examPractice){
+    document.getElementById('con-body').innerHTML='<div class="res"><div class="rico">🔁</div><h2>¡Repaso completo!</h2><div class="rsc">'+examScore+'<small> / '+tot+'</small></div>'+
+      '<div class="qwrite-pend" style="background:#E0F2FE;color:#075985">🔁 Modo repaso — esto no suma estrellas, es para que se te quede mejor antes del examen.</div>'+
+      '<button class="btn-p" onclick="startExamMode(\''+examKey+'\',true)">🔁 Repasar de nuevo</button>'+
+      '<button class="btn-s" onclick="showScreen(\'s-home\')">🏠 Volver al inicio</button></div>';
+    return;
+  }
+  var bonus=pct>=80?3:pct>=60?2:1;
+  addStars(bonus,'Simulacro examen: '+examMatName);
+  logAdmin('⏱️ Simulacro '+examMatName,examScore,tot);
+  document.getElementById('con-body').innerHTML='<div class="res"><div class="rico">⏱️</div><h2>¡Simulacro completo!</h2><div class="rsc">'+examScore+'<small> / '+tot+'</small></div>'+
+    '<div class="earn-box"><div class="es">⭐</div><div class="en">+'+bonus+' estrellas bonus</div><p>Por animarte a hacer el simulacro</p></div>'+
+    '<button class="btn-p" onclick="showScreen(\'s-home\')">🏠 Volver al inicio</button></div>';
+  saveState();
+}
+
+function openExamen(){
+  var html='<div class="ptip"><div class="pe">🦉</div><p>Tocá un examen para ver el <b>plan de estudio</b> y los recursos del colegio.</p></div>';
+  EXAMENES.forEach(function(e,i){
+    html+='<button class="ex-card" onclick="showPlanExamen('+i+')">'+
+      '<div class="ex-f"><div class="dia">'+e.dia+'</div><div class="mes">'+e.mes+'</div></div>'+
+      '<div class="ex-i"><h3>'+e.mat+'</h3><p>'+e.temas+'</p></div>'+
+      '<div class="ex-d"><div class="num">~'+diasHasta(e)+'</div><div class="lbl">días</div></div>'+
+      '</button>';
+  });
+  document.getElementById('ex-body').innerHTML=html;
+  showScreen('s-ex');
+}
+function showPlanExamen(idx){
+  var e=EXAMENES[idx];
+  var recHtml='';
+  if(e.recursos&&e.recursos.length>0){
+    recHtml='<div class="rec-box"><h4>📎 Recursos del colegio</h4>';
+    e.recursos.forEach(function(r){recHtml+='<div class="rec-row" onclick="window.open(\''+r.url+'\',\'_blank\')"><div class="rec-ico">'+r.e+'</div><div class="rec-txt">'+r.t+'</div><div class="rec-tag">Abrir ↗</div></div>';});
+    recHtml+='</div>';
+  }
+  document.getElementById('ex-body').innerHTML=
+    '<div class="ptip"><div class="pe">🦉</div><p>Para <b>'+e.mat+'</b> seguí este plan y llegás listo.</p></div>'+
+    '<div class="w-sec"><h3>📚 Temas</h3><p style="font-size:.86rem;color:#334155">'+e.temas+'</p></div>'+
+    '<div class="w-sec"><h3>📅 Plan</h3>'+
+    '<div class="plan-row"><div class="plan-tag">Semana 1</div><p>Ver animaciones y videos — sin presión.</p></div>'+
+    '<div class="plan-row"><div class="plan-tag">Semana 2</div><p>Hacer todos los quizzes.</p></div>'+
+    '<div class="plan-row"><div class="plan-tag">3 días antes</div><p>Repasar lo que te salió mal. Preguntas con papá o mamá.</p></div>'+
+    '<div class="plan-row"><div class="plan-tag">Noche antes</div><p>Audio de mamá. Dormí bien.</p></div>'+
+    '<div class="plan-row"><div class="plan-tag">El día</div><p>¡Ya estudiaste! Confiá en vos. 💪</p></div></div>'+
+    recHtml+
+    '<div class="earn-box" style="margin:.8rem 0"><div class="es">⭐</div><div class="en">~15 estrellas posibles</div><p>Si completás todos los quizzes = $750</p></div>'+
+    '<button class="btn-p" onclick="openMat()">📖 Empezar a estudiar ahora</button>'+
+    '<button class="btn-s" onclick="openExamen()">← Ver todos los exámenes</button>';
+}
+
+// ===== BILLETERA =====
+var EDU=[
+  {t:'¿Por qué ahorrar en dólares?',e:'💵',txt:'En Argentina, el peso puede perder valor con el tiempo — eso se llama inflación. El dólar suele mantener mejor su valor. Si hoy comprás un skin de Minecraft con $1.000, el año que viene ese mismo skin puede costar $2.000 si el peso se devaluó. Pero si tenías u$s 1, todavía te alcanza.',tip:'Esto se llama "reserva de valor": guardar el dinero en algo que no pierde tanto valor.',
+    quiz:[
+      {q:'¿Por qué el peso puede "valer menos" con el tiempo?',o:['Por la inflación','Por el tipo de cambio','Por los impuestos','Por el banco'],ok:0},
+      {q:'¿Por qué ahorrar en dólares protege tu plata?',o:['Porque el dólar es más bonito','Porque mantiene mejor su valor','Porque el banco lo exige','Porque es fácil de gastar'],ok:1}
+    ]
+  },
+  {t:'¿Qué es el interés?',e:'📈',txt:'El interés es la ganancia extra que recibís por prestar tu dinero. Si ponés $10.000 en el banco con 10% anual, al año tenés $11.000 sin hacer nada — el banco te pagó $1.000 por usar tu plata. Pero también funciona al revés: si pedís prestado, vos pagás interés.',tip:'Regla de oro: cuando ahorrás, el interés trabaja PARA vos. Cuando te endeudás, trabaja EN CONTRA.',
+    quiz:[
+      {q:'Si guardás $10.000 con 10% de interés anual, ¿cuánto tenés al año?',o:['$10.000','$10.100','$11.000','$20.000'],ok:2},
+      {q:'¿Cuándo el interés trabaja EN CONTRA tuyo?',o:['Cuando ahorrás','Cuando invertís','Cuando te endeudás','Cuando ganás'],ok:2}
+    ]
+  },
+  {t:'¿Qué es el presupuesto?',e:'📋',txt:'Un presupuesto es un plan de cuánto dinero entra y cuánto sale. Por ejemplo: si tenés $5.000 de propina al mes, y querés ahorrar $2.000, podés gastar solo $3.000 en el resto. Planear antes de gastar es el secreto de los que logran ahorrar.',tip:'Truco: antes de gastar algo, preguntate: ¿Lo NECESITO o solo lo QUIERO? Solo los "necesito" van al presupuesto.',
+    quiz:[
+      {q:'Tenés $5.000 y querés ahorrar $2.000. ¿Cuánto podés gastar?',o:['$5.000','$3.000','$2.000','$7.000'],ok:1},
+      {q:'¿Qué pregunta conviene hacerse antes de gastar?',o:['¿Es caro?','¿Lo quiero?','¿Lo necesito o solo lo quiero?','¿Tienen descuento?'],ok:2}
+    ]
+  },
+  {t:'¿Qué es invertir?',e:'🚀',txt:'Invertir es poner tu dinero a trabajar para que crezca. Un skin de Minecraft cuesta hoy $2.000 — si lo comprás y lo vendés en 6 meses cuando vale $3.000, ganaste $1.000. Eso es invertir. El riesgo es que también puede bajar de precio.',tip:'No pongas todos los huevos en la misma canasta. Diversificar = distribuir el dinero en varias inversiones para no perder todo si una falla.',
+    quiz:[
+      {q:'Comprás algo por $2.000 y lo vendés por $3.000. ¿Cuánto ganaste?',o:['$1.000','$2.000','$3.000','$5.000'],ok:0},
+      {q:'¿Qué significa "diversificar" una inversión?',o:['Invertir todo en una sola cosa','No invertir nada','Distribuir el dinero en varias inversiones','Gastarlo rápido'],ok:2}
+    ]
+  }
+];
+var eduIdx=0, wqAnswered=false;
+function openWallet(){
+  eduIdx=Math.floor(Math.random()*EDU.length);
+  wqIdx=0; wqAnswered=false; renderWallet(); showScreen('s-wallet');
+}
+function renderWallet(){
+  var p=totalStars*PESO, dl=(p/DOLAR).toFixed(2);
+  var meta=10000, pct=Math.min(100,Math.round(p/meta*100));
+  var edu=EDU[eduIdx];
+  var histHtml=historial.length===0
+    ?'<p style="color:var(--gris);font-size:.82rem">Todavía no ganaste estrellas. ¡Hacé un quiz!</p>'
+    :historial.slice(0,8).map(function(h){return '<div class="hist-row"><div class="hico">⭐</div><div class="hinfo"><p>'+h.desc+'</p><small>'+h.f+'</small></div><div class="hamt">+'+h.n+' ⭐</div></div>';}).join('');
+  document.getElementById('wallet-body').innerHTML=
+    '<div class="w-head"><h2>💰 La billetera de Salva</h2><div class="w-sal">$'+p.toLocaleString('es-AR')+'<small> pesos</small></div><div class="w-dol">≈ u$s '+dl+' 💵</div></div>'+
+    '<div class="wq-box" id="wq-box">'+buildWQ(edu)+'</div>'+
+    '<div class="w-sec"><h3>📊 Historial — '+totalStars+' ⭐</h3>'+histHtml+'</div>'+
+    '<div class="w-sec"><h3>🎯 Meta</h3>'+
+    '<div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;margin-bottom:.32rem"><span>$'+p.toLocaleString('es-AR')+'</span><span>Meta: $'+meta.toLocaleString('es-AR')+'</span></div>'+
+    '<div class="pbar"><div class="pbarfill" style="width:'+pct+'%"></div></div>'+
+    '<p style="font-size:.75rem;color:var(--gris);margin-top:.38rem;font-weight:600">'+pct+'% completado</p></div>'+
+    '<div class="w-sec"><h3>💡 ¿Cómo ganás ⭐?</h3><div style="font-size:.8rem;color:#334155;line-height:1.9">✏️ Quiz 80%+ → estrellas completas<br>✏️ Quiz 60-79% → algunas estrellas<br>🎮 Wordwall completado → ⭐1 extra<br>💰 Quiz billetera → ⭐1 por respuesta<br><b>Cada ⭐ = $'+PESO+'</b></div></div>';
+}
+function buildWQ(edu){
+  var q=edu.quiz[wqIdx];
+  return '<h3>'+edu.e+' Pipo te enseña: '+edu.t+'</h3>'+
+    '<p style="font-size:.8rem;color:#334155;margin-bottom:.6rem">'+edu.txt+'</p>'+
+    '<div class="wq-q">❓ '+q.q+'</div>'+
+    '<div class="wq-opts">'+
+    q.o.map(function(o,i){return '<button class="wq-opt" id="wqo'+i+'" onclick="checkWQ('+i+','+q.ok+')">'+o+'</button>';}).join('')+
+    '</div><div id="wqfb" style="font-size:.82rem;font-weight:700;margin-top:.6rem;min-height:16px"></div>';
+}
+function checkWQ(idx,correct){
+  if(wqAnswered) return; wqAnswered=true;
+  var edu=EDU[eduIdx];
+  for(var i=0;i<edu.quiz[wqIdx].o.length;i++){var b=document.getElementById('wqo'+i);if(b)b.disabled=true;}
+  document.getElementById('wqo'+correct).classList.add('ok');
+  var fb=document.getElementById('wqfb'), ok=(idx===correct);
+  if(ok){document.getElementById('wqo'+idx).classList.add('ok');addStars(1,'Edu financiera: '+edu.t);}
+  else{document.getElementById('wqo'+idx).classList.add('mal');}
+  if(fb) fb.innerHTML=(ok?'✅ ¡Correcto! +⭐1':'❌ La correcta: "'+edu.quiz[wqIdx].o[correct]+'"')+
+    ' <button class="btn-s" style="margin-top:.4rem" onclick="nextWQ()">Siguiente →</button>';
+}
+function nextWQ(){
+  var edu=EDU[eduIdx]; wqIdx++; wqAnswered=false;
+  var box=document.getElementById('wq-box');
+  if(wqIdx<edu.quiz.length) box.innerHTML=buildWQ(edu);
+  else box.innerHTML='<div style="text-align:center;padding:.5rem"><span style="font-size:2rem">🎓</span><p style="font-weight:800;color:var(--azul);margin:.35rem 0">¡Lección de hoy completada!</p><p style="font-size:.8rem;color:var(--gris)">Volvé mañana para aprender otro concepto financiero.</p></div>';
+}
+
+// ===== ADMIN =====
+function logAdmin(tema,score,total){adminLog.unshift({tema,score,total,pct:Math.round(score/total*100),f:new Date().toLocaleDateString('es-AR'),h:new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})});}
+function openAdmin(){
+  document.getElementById('admin-body').innerHTML='<div class="pin-scr"><div style="font-size:2.5rem;margin-bottom:.5rem">🔐</div><h3>Panel de mamá</h3><p>Ingresá el PIN para ver el seguimiento</p><input class="pin-inp" type="password" id="pin-inp" maxlength="4" placeholder="• • • •"><div class="pin-err" id="pin-err">PIN incorrecto.</div><button class="btn-p" onclick="checkPin()">Entrar</button></div>';
+  showScreen('s-admin');
+  setTimeout(function(){var inp=document.getElementById('pin-inp');if(inp)inp.addEventListener('keydown',function(e){if(e.key==='Enter')checkPin();});},100);
+}
+function checkPin(){
+  var inp=document.getElementById('pin-inp'), err=document.getElementById('pin-err');
+  if(inp&&inp.value===ADMIN_PIN) renderAdmin();
+  else{if(err)err.style.display='block';if(inp)inp.value='';}
+}
+function exportBackup(){
+  lastBackup=todayKey();
+  saveState();
+  var state={totalStars:totalStars,historial:historial,completados:completados,adminLog:adminLog,avatar:avatar,streak:streak,timeLog:timeLog,pendingWritten:pendingWritten,desempenoLog:desempenoLog,repasoLog:repasoLog,datoLog:datoLog,lastBackup:lastBackup};
+  var blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='pipo-respaldo-'+todayKey().split('/').join('-')+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  renderAdmin();
+}
+function triggerImportBackup(){
+  var inp=document.getElementById('import-file-input'); if(inp) inp.click();
+}
+function importBackup(evt){
+  var file=evt.target.files&&evt.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var st=JSON.parse(e.target.result);
+      if(!confirm('¿Reemplazar los datos actuales de Pipo con este respaldo? Las estrellas y el progreso de ahora se van a perder si no coinciden.')) { evt.target.value=''; return; }
+      totalStars=st.totalStars||0; historial=st.historial||[]; completados=st.completados||{}; adminLog=st.adminLog||[];
+      if(st.avatar) avatar=st.avatar;
+      if(st.streak) streak=st.streak;
+      timeLog=st.timeLog||{};
+      pendingWritten=st.pendingWritten||[];
+      desempenoLog=st.desempenoLog||[];
+      repasoLog=st.repasoLog||{};
+      datoLog=st.datoLog||{};
+      lastBackup=st.lastBackup||lastBackup; epoch=Date.now();
+      saveState();
+      updateStars(); updateAvatarUI(); renderAdmin();
+      alert('✅ Respaldo restaurado. Las estrellas y el progreso de Salva ya están de vuelta.');
+    }catch(err){
+      alert('❌ No pude leer ese archivo — fijate que sea un respaldo de Pipo (.json) descargado antes con el botón "Exportar respaldo".');
+    }
+    evt.target.value='';
+  };
+  reader.readAsText(file);
+}
+function sumLastDays(n){
+  var sum=0;
+  for(var i=0;i<n;i++){
+    var d=new Date(); d.setDate(d.getDate()-i);
+    sum+=timeLog[d.toLocaleDateString('es-AR')]||0;
+  }
+  return sum;
+}
+function ajusteManual(){
+  var motivoInp=document.getElementById('adj-motivo'), cantInp=document.getElementById('adj-cantidad');
+  var motivo=(motivoInp&&motivoInp.value.trim())||'Ajuste manual';
+  var cant=parseInt(cantInp?cantInp.value:'',10);
+  if(isNaN(cant)||cant===0){ pipoSay('Ingresá una cantidad de estrellas distinta de cero.'); return; }
+  addStars(cant,motivo);
+  if(totalStars<0) totalStars=0;
+  saveState(); renderAdmin();
+}
+function addDesempeno(){
+  var matSel=document.getElementById('desemp-mat'), tareaInp=document.getElementById('desemp-tarea'), notaInp=document.getElementById('desemp-nota');
+  var materia=matSel?matSel.value:'', tarea=(tareaInp&&tareaInp.value.trim())||'Tarea de desempeño';
+  var nota=parseFloat(notaInp?notaInp.value:'');
+  if(isNaN(nota)||nota<0||nota>10){ pipoSay('Ingresá una nota válida entre 0 y 10.'); return; }
+  var bonus=Math.max(0,Math.round((nota/10)*DESEMP_MAX_STARS));
+  desempenoLog.unshift({materia:materia,tarea:tarea,nota:nota,bonus:bonus,fecha:new Date().toLocaleDateString('es-AR')});
+  if(bonus>0) addStars(bonus,'Tarea de desempeño: '+tarea+' ('+materia+') — Nota '+nota+'/10');
+  saveState(); renderAdmin();
+}
+function gradeWritten(idx,nota){
+  var w=pendingWritten[idx]; if(!w) return;
+  w.estado='corregida'; w.nota=nota;
+  var bonus=Math.max(1,Math.round(nota/5*3));
+  addStars(bonus,'Redacción corregida: '+w.tema);
+  saveState(); renderAdmin();
+}
+function renderAdmin(){
+  var p=totalStars*PESO, dl=(p/DOLAR).toFixed(2);
+  var total=adminLog.length, prom=total>0?Math.round(adminLog.reduce(function(a,l){return a+l.pct;},0)/total):0;
+  var logHtml=adminLog.length===0?'<p style="color:var(--gris);font-size:.82rem">Salvador todavía no completó ningún quiz.</p>':
+    adminLog.map(function(l){var col=l.pct>=80?'#166534':l.pct>=60?'#92400E':'#991B1B';
+      return '<div class="ahrow"><div class="ahico">'+(l.pct>=80?'🏆':l.pct>=60?'💪':'📚')+'</div><div class="ahinfo">'+l.tema+'<br><span class="ahdate">'+l.f+' '+l.h+'</span></div><div class="ahscore" style="color:'+col+'">'+l.score+'/'+l.total+'</div></div>';
+    }).join('');
+  var todaySec=timeLog[new Date().toLocaleDateString('es-AR')]||0;
+  var weekSec=sumLastDays(7);
+  var pend=pendingWritten.filter(function(w){return w.estado==='pendiente';});
+  var pendHtml=pend.length===0?'<p style="color:var(--gris);font-size:.82rem">No hay redacciones pendientes de corregir.</p>':
+    pend.map(function(w){
+      var realIdx=pendingWritten.indexOf(w);
+      return '<div style="border:1px solid #E2E8F0;border-radius:11px;padding:.85rem;margin-bottom:.6rem">'+
+        '<p style="font-size:.7rem;color:var(--gris);font-weight:800;margin-bottom:.3rem">'+w.materia.toUpperCase()+' · '+w.tema+' · '+w.fecha+'</p>'+
+        '<p style="font-size:.82rem;font-weight:700;color:var(--azul);margin-bottom:.4rem">'+w.pregunta+'</p>'+
+        (w.rubric?'<div class="qrubric" style="margin-bottom:.5rem">📋 '+w.rubric+'</div>':'')+
+        '<div style="background:var(--fondo);border-radius:9px;padding:.65rem;font-size:.82rem;color:#334155;margin-bottom:.6rem;white-space:pre-wrap">'+w.respuesta+'</div>'+
+        '<p style="font-size:.72rem;font-weight:800;color:var(--gris);margin-bottom:.35rem">Calificá del 1 al 5:</p>'+
+        '<div style="display:flex;gap:.35rem;flex-wrap:wrap">'+
+        [1,2,3,4,5].map(function(n){return '<button class="btn-s" style="margin:0;padding:.5rem .7rem;width:auto;flex:1" onclick="gradeWritten('+realIdx+','+n+')">'+n+'⭐</button>';}).join('')+
+        '</div></div>';
+    }).join('');
+  var diasSinRespaldo=lastBackup?Math.round((new Date()-parseFechaAR(lastBackup))/86400000):999;
+  var recordatorio=diasSinRespaldo>=7?
+    '<div class="admin-wrap" style="background:#FEF3C7;border:2px solid #F59E0B">'+
+    '<p style="font-weight:800;color:#78350F;font-size:.85rem;margin-bottom:.4rem">⏰ '+(lastBackup?'Hace '+diasSinRespaldo+' días que no hacés un respaldo':'Todavía no hiciste ningún respaldo')+'</p>'+
+    '<p style="font-size:.78rem;color:#78350F;margin-bottom:.6rem">Exportá uno ahora para no perder el progreso de Salva si algo pasa con este navegador.</p>'+
+    '<button class="btn-p" style="margin:0" onclick="exportBackup()">💾 Exportar respaldo ahora</button>'+
+    '</div>':'';
+  document.getElementById('admin-body').innerHTML=
+    recordatorio+
+    '<div class="admin-wrap"><h3>📊 Resumen</h3>'+
+    '<div class="astat"><span class="lbl">Total estrellas</span><span class="val">⭐ '+totalStars+'</span></div>'+
+    '<div class="astat"><span class="lbl">Ahorro</span><span class="val">$'+p.toLocaleString('es-AR')+' (u$s '+dl+')</span></div>'+
+    '<div class="astat"><span class="lbl">Quizzes completados</span><span class="val">'+total+'</span></div>'+
+    '<div class="astat"><span class="lbl">Promedio</span><span class="val">'+prom+'%</span></div>'+
+    '<div class="astat"><span class="lbl">🔥 Racha actual</span><span class="val">'+streak.count+' día(s)</span></div>'+
+    '</div>'+
+    '<div class="admin-wrap"><h3>💾 Copia de seguridad</h3>'+
+    '<p style="font-size:.78rem;color:var(--gris);margin-bottom:.7rem;line-height:1.5">Los datos de Salva se guardan en este navegador/dispositivo. Si cambiás de link de Pipo, de navegador o de celular, <b>se pierden a menos que hayas exportado un respaldo antes.</b> Te recomiendo exportar cada tanto, y siempre antes de instalar una versión nueva.</p>'+
+    '<button class="btn-p" style="margin-bottom:.5rem" onclick="exportBackup()">💾 Exportar respaldo</button>'+
+    '<button class="btn-s" onclick="triggerImportBackup()">📤 Restaurar desde un respaldo</button>'+
+    '</div>'+
+    cloudAdminHtml()+
+    '<div class="admin-wrap"><h3>⏱️ Tiempo de estudio</h3>'+
+    '<div class="astat"><span class="lbl">Hoy</span><span class="val">'+fmtTime(todaySec)+'</span></div>'+
+    '<div class="astat"><span class="lbl">Últimos 7 días</span><span class="val">'+fmtTime(weekSec)+'</span></div>'+
+    '</div>'+
+    '<div class="admin-wrap"><h3>✍️ Redacciones para corregir</h3>'+pendHtml+'</div>'+
+    '<div class="admin-wrap"><h3>🔍 Ideas de Salva (dato del día)</h3>'+
+    '<p style="font-size:.76rem;color:var(--gris);margin-bottom:.6rem">Son reflexiones, no respuestas "correctas o incorrectas" — no hace falta corregirlas, es solo para que veas cómo piensa.</p>'+
+    (Object.keys(datoLog).length===0?'<p style="color:var(--gris);font-size:.8rem">Todavía no respondió ningún dato del día.</p>':
+      Object.keys(datoLog).sort().reverse().slice(0,10).map(function(k){var d=datoLog[k]; return '<div class="desemp-row" style="align-items:flex-start"><div>'+k+'<br><span class="ahdate" style="font-style:italic">"'+d.respuesta+'"</span></div></div>';}).join('')
+    )+
+    '</div>'+
+    '<div class="admin-wrap"><h3>➕ Ajuste manual de estrellas</h3>'+
+    '<p style="font-size:.78rem;color:var(--gris);margin-bottom:.7rem;line-height:1.5">Para sumar (o corregir) estrellas a mano — por ejemplo, para recuperar algo perdido por un problema técnico. Quedá registrado en el historial con el motivo que pongas.</p>'+
+    '<div class="desemp-form">'+
+    '<input type="text" id="adj-motivo" placeholder="Motivo (ej: recuperación por problema técnico)">'+
+    '<input type="number" id="adj-cantidad" placeholder="Cantidad de estrellas">'+
+    '<button class="btn-p" style="margin-top:0" onclick="ajusteManual()">Aplicar ajuste</button>'+
+    '</div>'+
+    '</div>'+
+    '<div class="admin-wrap"><h3>🎯 Tareas de desempeño</h3>'+
+    '<p style="font-size:.78rem;color:var(--gris);margin-bottom:.7rem;line-height:1.5">Cargá la nota que Salva sacó en la tarea de desempeño de cada materia (después del quiz) y le das un bonus en estrellas — hasta ⭐'+DESEMP_MAX_STARS+' por una nota 10.</p>'+
+    '<div class="desemp-form">'+
+    '<select id="desemp-mat">'+Object.keys(MAT2KEY).map(function(m){return '<option value="'+m+'">'+m+'</option>';}).join('')+'</select>'+
+    '<input type="text" id="desemp-tarea" placeholder="Nombre de la tarea (ej: informe de Sociales)">'+
+    '<input type="number" id="desemp-nota" min="0" max="10" step="0.5" placeholder="Nota (0 a 10)">'+
+    '<button class="btn-p" style="margin-top:0" onclick="addDesempeno()">💰 Dar bonus</button>'+
+    '</div>'+
+    (desempenoLog.length===0?'<p style="color:var(--gris);font-size:.8rem">Todavía no cargaste ninguna tarea de desempeño.</p>':
+      desempenoLog.map(function(d){return '<div class="desemp-row"><div>'+d.materia+' — '+d.tarea+'<br><span class="ahdate">'+d.fecha+' · Nota '+d.nota+'/10</span></div><div class="desemp-bonus">+'+d.bonus+' ⭐</div></div>';}).join('')
+    )+
+    '</div>'+
+    '<div class="admin-wrap"><h3>📋 Historial</h3>'+logHtml+'</div>'+
+    '<div class="admin-wrap"><h3>⚙️ Config</h3>'+
+    '<div class="astat"><span class="lbl">Valor por ⭐</span><span class="val">$'+PESO+'</span></div>'+
+    '<div class="astat"><span class="lbl">Tipo de cambio ref.</span><span class="val">$'+DOLAR+'/u$s1</span></div>'+
+    '</div>'+
+    '<button class="btn-river" onclick="resetTodo()">🗑️ Resetear todo (dejar en cero)</button>'+
+    '<button class="btn-s" onclick="showScreen(\'s-home\')">← Volver</button>';
+}
+function resetTodo(){
+  if(!confirm('¿Segura que querés resetear todo? Se borran todas las estrellas y quizzes completados.')) return;
+  totalStars=0; historial=[]; completados={}; adminLog=[]; timeLog={}; pendingWritten=[]; desempenoLog=[]; repasoLog={}; datoLog={};
+  streak={count:0,last:'',awarded:[]}; epoch=Date.now();
+  try{localStorage.removeItem('pipo_v6_state');}catch(e){}
+  updateStars(); updateStreak(); renderAdmin();
+  alert('✅ Todo reseteado. Pipo queda en cero para Salvador.');
+}
+
+// ===== AVATAR =====
+var AV_OPTIONS={
+  hair:[{v:'#1a1a1a',l:'Negro'},{v:'#6B3A2A',l:'Castaño'},{v:'#F5C518',l:'Rubio'},{v:'#C0392B',l:'Pelirrojo'},{v:'#ddd',l:'Blanco'}],
+  shirt:[{v:'#CC0000',l:'River ❤️'},{v:'#2A4499',l:'Azul'},{v:'#27AE60',l:'Verde'},{v:'#222',l:'Negra'},{v:'#F5C842',l:'Amarilla'},{v:'#E67E22',l:'Naranja'}],
+  pants:[{v:'#1a3a6b',l:'Azul'},{v:'#222',l:'Negro'},{v:'#7B5B3A',l:'Marrón'},{v:'#eee',l:'Blanco'},{v:'#166534',l:'Verde'}],
+  shoes:[{v:'#111',l:'Negras'},{v:'#fff',l:'Blancas'},{v:'#c0392b',l:'Rojas'},{v:'#1B2D6B',l:'Azules'}],
+  acc:[{v:'⚽',l:'Pelota'},{v:'🎮',l:'Joystick'},{v:'🧱',l:'Lego'},{v:'🏆',l:'Copa'},{v:'⛏️',l:'Pico MC'},{v:'🦁',l:'León River'},{v:'🎒',l:'Mochila'},{v:'📚',l:'Libros'}],
+  skin:[{v:'#C68642',l:'Marrón'},{v:'#F5D5A0',l:'Claro'},{v:'#D4956A',l:'Medio'},{v:'#5C3317',l:'Oscuro'}]
+};
+
+function makeAvatarSVG(av,w,h,animated){
+  var skin=av.skin, hair=av.hair, shirt=av.shirt, pants=av.pants, shoes=av.shoes, an=animated?' anim':'';
+  return '<svg viewBox="0 0 80 110" width="'+w+'" height="'+h+'" xmlns="http://www.w3.org/2000/svg">'+
+    '<ellipse cx="40" cy="107" rx="20" ry="4" fill="rgba(0,0,0,.15)"/>'+
+    '<g class="av-figure'+an+'">'+
+    '<rect x="20" y="8" width="40" height="14" rx="4" fill="'+hair+'"/>'+
+    '<rect x="18" y="14" width="6" height="10" rx="2" fill="'+hair+'"/>'+
+    '<rect x="56" y="14" width="6" height="10" rx="2" fill="'+hair+'"/>'+
+    '<rect x="22" y="14" width="36" height="32" rx="5" fill="'+skin+'"/>'+
+    '<g class="av-eye'+an+'">'+
+    '<rect x="29" y="22" width="8" height="8" rx="2" fill="white"/>'+
+    '<rect x="31" y="24" width="4" height="4" rx="1" fill="#1a1a2e"/>'+
+    '<rect x="33" y="24" width="2" height="2" fill="white"/>'+
+    '</g>'+
+    '<g class="av-eye'+an+' e2">'+
+    '<rect x="43" y="22" width="8" height="8" rx="2" fill="white"/>'+
+    '<rect x="45" y="24" width="4" height="4" rx="1" fill="#1a1a2e"/>'+
+    '<rect x="47" y="24" width="2" height="2" fill="white"/>'+
+    '</g>'+
+    '<path d="M32 36 Q40 42 48 36" stroke="#7B3F00" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+    '<rect x="20" y="48" width="40" height="30" rx="5" fill="'+shirt+'"/>'+
+    '<text x="40" y="68" text-anchor="middle" font-size="10" font-weight="900" fill="white" opacity=".75">10</text>'+
+    '<rect x="8" y="50" width="12" height="24" rx="5" fill="'+shirt+'"/>'+
+    '<rect x="60" y="50" width="12" height="24" rx="5" fill="'+shirt+'"/>'+
+    '<rect x="8" y="72" width="12" height="10" rx="4" fill="'+skin+'"/>'+
+    '<rect x="60" y="72" width="12" height="10" rx="4" fill="'+skin+'"/>'+
+    '<rect x="20" y="76" width="18" height="22" rx="4" fill="'+pants+'"/>'+
+    '<rect x="42" y="76" width="18" height="22" rx="4" fill="'+pants+'"/>'+
+    '<rect x="18" y="96" width="22" height="10" rx="4" fill="'+shoes+'"/>'+
+    '<rect x="40" y="96" width="22" height="10" rx="4" fill="'+shoes+'"/>'+
+    '<text x="70" y="80" text-anchor="middle" font-size="14">'+av.acc+'</text>'+
+    '</g>'+
+    '</svg>';
+}
+
+function getLevel(s){return s>=50?'🏆 Crack total':s>=30?'🥇 Pro':s>=15?'🥈 Avanzado':s>=5?'🥉 Intermedio':'🌱 Principiante';}
+
+function updateAvatarUI(){
+  var fl=document.getElementById('av-float-inner'); if(fl) fl.innerHTML=makeAvatarSVG(avatar,44,44,false);
+  var ow=document.getElementById('home-owl'); if(ow) ow.innerHTML=makeAvatarSVG(avatar,44,44,true);
+  var ico=document.getElementById('home-av-ico'); if(ico) ico.innerHTML=makeAvatarSVG(avatar,32,32,false);
+}
+
+function openProgreso(){
+  renderProgreso();
+  showScreen('s-progreso');
+}
+function estadoTema(mat,i){
+  var key=mat+'_'+i, done=completados[key];
+  if(isLocked(mat,i)) return {label:'🔒 Bloqueado',cls:'bloqueado'};
+  if(!done) return {label:'🔓 Para empezar',cls:'pendiente'};
+  var pct=Math.round(done.score/done.total*100);
+  if(pct>=80) return {label:'🌟 Dominado',cls:'dominado'};
+  if(pct>=60) return {label:'💪 En camino',cls:'camino'};
+  return {label:'📚 A repasar',cls:'repasar'};
+}
+function renderProgreso(){
+  var body=document.getElementById('progreso-body'); if(!body) return;
+  var html='<div class="prog-streak">🔥 Racha actual<b>'+streak.count+' día(s)</b></div>';
+  Object.keys(DATOS).forEach(function(mat){
+    var data=DATOS[mat], total=data.temas.length, dominados=0, enCamino=0, hayCompletados=false;
+    var rows='';
+    data.temas.forEach(function(t,i){
+      var est=estadoTema(mat,i);
+      if(est.cls==='dominado') dominados++;
+      if(est.cls==='camino') enCamino++;
+      if(completados[mat+'_'+i]) hayCompletados=true;
+      var pendWrite=t.quiz.some(function(q){return (q.type||'mc')==='write';})?
+        (function(){var w=findPendingWritten(mat,t.titulo,t.quiz.filter(function(q){return(q.type||'mc')==='write';})[0].q); return w&&w.estado==='pendiente'?' <span style="font-size:.68rem;color:#92400E">(✍️ esperando corrección)</span>':'';})():'';
+      var repCount=repasoLog[mat+'_'+i]||0;
+      var repBtn=completados[mat+'_'+i]?'<button class="btn-s" style="margin:0;padding:.35rem .6rem;width:auto;font-size:.7rem" onclick="goRepasoDirect(\''+mat+'\','+i+')">🔁'+(repCount>0?' '+repCount:'')+'</button>':'';
+      rows+='<div class="prog-tema-row"><div class="pti">'+(i+1)+'</div><div class="ptn">'+t.titulo+pendWrite+'</div>'+repBtn+'<div class="pts '+est.cls+'">'+est.label+'</div></div>';
+    });
+    var pctMat=total>0?Math.round((dominados/total)*100):0;
+    html+='<div class="prog-mat"><h3>'+data.nombre+'</h3>'+
+      '<div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:'+pctMat+'%"></div></div>'+
+      '<div class="prog-sub">'+dominados+' de '+total+' temas dominados'+(enCamino>0?' · '+enCamino+' en camino':'')+'</div>'+
+      rows+
+      (hayCompletados?'<button class="btn-s" style="margin-top:.7rem" onclick="startExamMode(\''+(Object.keys(MAT2KEY).find(function(k){return MAT2KEY[k]===mat;})||data.nombre)+'\',true)">🔁 Repaso mezclado de '+data.nombre+'</button>':'')+
+      '</div>';
+  });
+  body.innerHTML=html;
+}
+function goRepasoDirect(mat,i){
+  openTema(mat,i);
+  switchTab('quiz');
+  startRepasoQuiz();
+}
+function openAvatar(){
+  renderAvatarScreen(); showScreen('s-avatar');
+}
+function renderAvatarScreen(){
+  var body=document.getElementById('avatar-body');
+  var bigSVG=makeAvatarSVG(avatar,120,160,true);
+  var sections=[
+    {key:'hair',label:'💇 Cabello'},{key:'shirt',label:'👕 Remera'},
+    {key:'pants',label:'👖 Pantalón'},{key:'shoes',label:'👟 Zapatillas'},
+    {key:'acc',label:'🎒 Accesorio'},{key:'skin',label:'🎨 Tono de piel'}
+  ];
+  var bg=avatar.bg||'river';
+  var html='<div class="av-screen-top bg-'+bg+'">'+
+    '<div style="display:flex;align-items:center;justify-content:center;gap:1rem">'+
+    bigSVG+
+    '<div style="text-align:left"><div class="av-nm">Salva</div><div class="av-lv">'+getLevel(totalStars)+'</div>'+
+    '<div class="av-badges"><span class="avb">⭐ '+totalStars+'</span><span class="avb">🏟️ River</span><span class="avb">⚽ Fútbol</span></div></div>'+
+    '</div></div>';
+  html+='<div class="av-sec"><h3>🖼️ Fondo</h3><div class="av-opts">'+
+    '<button class="av-opt'+(bg==='river'?' sel':'')+'" onclick="setAv(\'bg\',\'river\')"><span class="bg-opt-preview river"></span>Cancha de River</button>'+
+    '<button class="av-opt'+(bg==='minecraft'?' sel':'')+'" onclick="setAv(\'bg\',\'minecraft\')"><span class="bg-opt-preview minecraft"></span>Mundo Minecraft</button>'+
+    '<button class="av-opt'+(bg==='biblio'?' sel':'')+'" onclick="setAv(\'bg\',\'biblio\')"><span class="bg-opt-preview biblio"></span>Biblioteca</button>'+
+    '</div></div>';
+  sections.forEach(function(sec){
+    var opts=AV_OPTIONS[sec.key];
+    html+='<div class="av-sec"><h3>'+sec.label+'</h3><div class="av-opts">';
+    opts.forEach(function(o){
+      var isSel=avatar[sec.key]===o.v;
+      var preview=sec.key==='acc'?o.v:'<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:'+o.v+';vertical-align:middle;border:1px solid rgba(0,0,0,.15)"></span>';
+      html+='<button class="av-opt'+(isSel?' sel':'')+'" onclick="setAv(\''+sec.key+'\',\''+o.v.replace(/'/g,"\\'")+'\')" style="'+(isSel?'border-color:var(--azul);background:var(--aclaro)':'')+'">'+preview+' '+o.l+'</button>';
+    });
+    html+='</div></div>';
+  });
+  html+='<button class="btn-p" onclick="saveAvatar()">✅ Guardar mi personaje</button>';
+  body.innerHTML=html;
+}
+function setAv(key,val){avatar[key]=val;renderAvatarScreen();}
+function saveAvatar(){updateAvatarUI();saveState();showScreen('s-home');}
+
+// ===== DATOS =====
+var DATOS={
+  lengua:{nombre:'📝 Lengua Castellana',temas:[
+    {titulo:'La Poesía',sub:'Estructura, recursos y tipos de rima',stars:3,
+     flujo:['📄 Verso','📦 Estrofa','🔊 Rima consonante','🎵 Rima asonante','🌊 Metáfora','👥 Personificación','🔍 Símil','🔁 Repetición','🖼️ Caligrama'],
+     cards:[
+       {e:'📄',t:'VERSO',d:'Cada línea del poema. Un poema tiene muchos versos.\nEj: "Me gustas cuando callas" es un verso.'},
+       {e:'📦',t:'ESTROFA',d:'Grupo de versos juntos, como un párrafo.\nUn poema puede tener 2, 3 o más estrofas.'},
+       {e:'🔊',t:'RIMA CONSONANTE',d:'Suenan igual desde la última vocal acentuada.\nEj: sol / col / caracol — amor / dolor / color'},
+       {e:'🎵',t:'RIMA ASONANTE',d:'Solo riman las vocales finales.\nEj: madre / tarde / árbol — alma / calma / palma'},
+       {e:'🌊',t:'METÁFORA',d:'Decir que algo ES otra cosa directamente, sin "como".\nEj: "Tus ojos son estrellas" / "La vida es un sueño"'},
+       {e:'👥',t:'PERSONIFICACIÓN',d:'Darle cualidades humanas a algo que no lo es.\nEj: "El sol abraza la tierra" / "El viento susurra secretos"'},
+       {e:'🔍',t:'SÍMIL / COMPARACIÓN',d:'Comparar dos cosas usando "como" o "parece".\nEj: "Rápido como el viento" / "Blanco como la nieve"'},
+       {e:'🔁',t:'REPETICIÓN',d:'Repetir palabras o frases para dar énfasis y ritmo.\nEj: "Corre, corre, corre..." / "Todo pasa, todo queda"'},
+       {e:'🖼️',t:'CALIGRAMA',d:'Es un poema donde las palabras forman un DIBUJO relacionado con lo que dicen. Por ejemplo, un poema sobre un árbol escrito con la forma de un árbol, o uno sobre la lluvia con las palabras cayendo hacia abajo. Mezcla poesía con imagen.'}
+     ],
+     teoria:'<div class="info-card"><div class="ie">📖</div><div class="it"><strong>EL GÉNERO FANTÁSTICO</strong><span>Un texto fantástico presenta hechos que no pueden explicarse naturalmente. El lector duda: ¿es real o es magia? Eso crea tensión. Diferencia con lo maravilloso: en lo maravilloso todos aceptan lo sobrenatural como normal. En lo fantástico, irrumpe en un mundo real.</span></div></div>'+
+       '<div class="info-card"><div class="ie">📝</div><div class="it"><strong>EL RAFT (técnica de escritura)</strong><span>R = Rol (¿quién sos?), A = Audiencia (¿a quién le escribís?), F = Formato (¿carta, cuento, noticia?), T = Tema (¿de qué tratás?). Ejemplo: Rol=periodista, Audiencia=lectores, Formato=nota, Tema=la Revolución de Mayo.</span></div></div>'+
+       '<div class="info-card"><div class="ie">📊</div><div class="it"><strong>CUADRO SINÓPTICO</strong><span>Es un organizador visual que muestra un tema con sus subtemas y detalles, usando llaves {}. Se lee de izquierda a derecha. Es útil para resumir teoría de cualquier materia.</span></div></div>',
+     videos:[],
+     juegos:[],
+     quiz:[
+       {q:'¿Cómo se llama cada línea de un poema?',o:['Estrofa','Verso','Párrafo','Rima'],ok:1},
+       {q:'"Tus ojos son estrellas" es un ejemplo de...',o:['Rima','Personificación','Metáfora','Repetición'],ok:2},
+       {q:'En la rima asonante, ¿qué es lo que rima?',o:['Todo el final','Solo las vocales','Solo las consonantes','El principio'],ok:1},
+       {q:'"El río llora de noche" es...',o:['Metáfora','Comparación','Personificación','Rima'],ok:2},
+       {q:'¿Cómo se llama el grupo de versos?',o:['Párrafo','Rima','Estrofa','Verso'],ok:2},
+       {q:'¿Qué es un caligrama?',o:['Un poema sin rima','Un poema donde las palabras forman un dibujo relacionado con el tema','Una estrofa muy larga','Un tipo de rima asonante'],ok:1},
+       {type:'write',q:'Escribí un poema corto de 2 estrofas usando al menos una metáfora y una personificación.',rubric:'✅ Tiene 2 estrofas · ✅ Usa una metáfora clara · ✅ Usa una personificación clara · ✅ Tiene alguna rima · ✅ Se entiende el sentido general',starter:'Estrofa 1:\nEl/La ___ es como ___ (esa es tu metáfora)\n\nEstrofa 2:\nEl/La ___ (algo que no es persona) ___ (una acción de persona) — (esa es tu personificación)'}
+     ]
+    },
+    {titulo:'Sustantivos y Adjetivos',sub:'Clasificación semántica y morfológica',stars:3,
+     flujo:['🏷️ Sust. Común','⭐ Sust. Propio','👁️ Concreto','💭 Abstracto','🎨 Calificativo','🌍 Gentilicio','🔢 Numeral','👤 Posesivo','📍 Demostrativo'],
+     cards:[
+       {e:'🏷️',t:'SUSTANTIVO COMÚN',d:'Nombra cualquier cosa de su tipo. Sin mayúscula.\nEj: perro, ciudad, árbol, libro, pelota'},
+       {e:'⭐',t:'SUSTANTIVO PROPIO',d:'Nombra uno específico y único. Con mayúscula siempre.\nEj: Messi, Buenos Aires, Paraná, River Plate'},
+       {e:'👁️',t:'SUSTANTIVO CONCRETO',d:'Se puede tocar, ver, oír, oler o probar.\nEj: mesa, pelota, agua, música, perfume'},
+       {e:'💭',t:'SUSTANTIVO ABSTRACTO',d:'No se puede tocar — es una idea, sentimiento o cualidad.\nEj: amor, libertad, miedo, justicia, valentía'},
+       {e:'🎨',t:'ADJ. CALIFICATIVO',d:'Dice cómo ES algo — su calidad o característica.\nEj: alto, rojo, inteligente, rápido, hermoso'},
+       {e:'🌍',t:'ADJ. GENTILICIO',d:'Dice de dónde ES algo o alguien.\nEj: argentino, cordobés, francés, americano'},
+       {e:'🔢',t:'ADJ. NUMERAL',d:'Dice cuántos (cardinal) o en qué orden (ordinal).\nEj: tres libros, primer puesto, segunda vuelta'},
+       {e:'👤',t:'ADJ. POSESIVO',d:'Dice de quién ES algo.\nEj: mi pelota, su casa, nuestro equipo, tu libro'},
+       {e:'📍',t:'ADJ. DEMOSTRATIVO',d:'Dice a qué distancia está algo del hablante.\nEste (cerca), ese (medio), aquel (lejos)'}
+     ],
+     teoria:'<div class="info-card"><div class="ie">📏</div><div class="it"><strong>CLASIFICACIÓN MORFOLÓGICA DEL SUSTANTIVO</strong><span>Por género: masculino (el libro) / femenino (la mesa). Por número: singular (gato) / plural (gatos). Sustantivos invariables: lunes, crisis, tesis. Sustantivos epicenos: tienen un solo género para ambos sexos (la víctima, el personaje).</span></div></div>',
+     videos:[],
+     juegos:[],
+     quiz:[
+       {q:'"Buenos Aires" es un sustantivo...',o:['Común y concreto','Propio','Abstracto','Común abstracto'],ok:1},
+       {q:'"Libertad" es un sustantivo...',o:['Concreto y propio','Común y abstracto','Propio abstracto','Concreto común'],ok:1},
+       {q:'En "mi pelota", "mi" es adjetivo...',o:['Calificativo','Gentilicio','Posesivo','Demostrativo'],ok:2},
+       {q:'"Cordobés" es adjetivo...',o:['Calificativo','Gentilicio','Numeral','Posesivo'],ok:1},
+       {q:'"Este libro" — "este" es adjetivo...',o:['Posesivo','Numeral','Gentilicio','Demostrativo'],ok:3},
+       {type:'write',q:'Escribí 3 oraciones: una con un sustantivo abstracto, otra con un adjetivo gentilicio y otra con un adjetivo posesivo. Marcá cuál palabra es cada una.',rubric:'✅ Sustantivo abstracto correcto y señalado · ✅ Adjetivo gentilicio correcto y señalado · ✅ Adjetivo posesivo correcto y señalado · ✅ Oraciones completas y con sentido',starter:'1) Sustantivo abstracto: La ___ es importante para mí. (ejemplo: la amistad)\n2) Adjetivo gentilicio: Mi amigo es ___. (ejemplo: argentino)\n3) Adjetivo posesivo: Ese es ___ cuaderno. (ejemplo: mi)'}
+     ]
+    }
+  ]},
+  ingles:{nombre:'🇬🇧 English / Inglés',temas:[
+    {titulo:'Comparatives & Superlatives',sub:'Short and long adjectives + irregulars',stars:4,
+     flujo:['⚖️ Comparative corto (-er)','⚖️ Comparative largo (more)','🏆 Superlative corto (-est)','🏆 Superlative largo (most)','⚠️ Irregulares','💡 Truco'],
+     cards:[
+       {e:'⚖️',t:'COMPARATIVE — SHORT adjective (1 syllable)',d:'Adjective + ER + than\ntall → taller than / fast → faster than\nbig → bigger than / hot → hotter than\n⚠️ If it ends in consonant: double it! big→bigger'},
+       {e:'⚖️',t:'COMPARATIVE — LONG adjective (2+ syllables)',d:'MORE + adjective + than\nbeautiful → more beautiful than\ninteresting → more interesting than\nexpensive → more expensive than'},
+       {e:'🏆',t:'SUPERLATIVE — SHORT adjective',d:'THE + adjective + EST\ntall → the tallest / fast → the fastest\nbig → the biggest / hot → the hottest'},
+       {e:'🏆',t:'SUPERLATIVE — LONG adjective',d:'THE MOST + adjective\nbeautiful → the most beautiful\ninteresting → the most interesting\nexpensive → the most expensive'},
+       {e:'⚠️',t:'IRREGULARES — ¡memorizalos!',d:'good → better → the best\nbad → worse → the worst\nfar → farther → the farthest\nlittle → less → the least'},
+       {e:'💡',t:'TRUCO PARA NO EQUIVOCARSE',d:'Contá las sílabas:\n1 sílaba → -er / -est (tall, big, fast)\n2+ sílabas → more / the most (beautiful, interesting)\nAdjectives ending in -y: change y→i (happy→happier)'}
+     ],
+     teoria:'<div class="info-card"><div class="ie">📝</div><div class="it"><strong>ADJETIVOS TERMINADOS EN -Y</strong><span>Cuando el adjetivo termina en -y, se cambia la y por i antes de agregar -er o -est.\nhappy → happier → the happiest\nfunny → funnier → the funniest\nheavy → heavier → the heaviest</span></div></div>'+
+       '<div class="info-card"><div class="ie">🔤</div><div class="it"><strong>AS...AS (comparación de igualdad)</strong><span>Para decir que dos cosas son IGUALES: as + adjective + as\nEj: Messi is as fast as Mbappé.\nEj: This book is as interesting as that one.</span></div></div>',
+     videos:[
+       {e:'⚖️',t:'Comparatives & Superlatives',c:'YouTube (canción)',d:'4 min',embed:'WswjYJYKzWs'}
+     ],
+     juegos:[
+       {e:'🎮',t:'Comparative or Superlative? — Wordwall',d:'Jugá y elegí la opción correcta',url:'https://wordwall.net/es/resource/75759311/english/comparative-or-superlative'},
+       {e:'🕹️',t:'Comparative & Superlative Adjectives',d:'Practica con ejemplos variados',url:'https://wordwall.net/es/resource/95855840/ingl%C3%A9s/comparative-and-superlative-adjectives'},
+       {e:'🎯',t:'Comparatives & Superlatives 2',d:'Nivel intermedio',url:'https://wordwall.net/es/resource/98150356/english/comparative-and-superlative-adjectives-2'}
+     ],
+     quiz:[
+       {q:'Complete: "My dog is ___ than yours." (big)',o:['more big','bigger','biggest','the biggest'],ok:1},
+       {q:'Complete: "This is ___ book I ever read." (interesting)',o:['more interesting','interestinger','the most interesting','the interestingest'],ok:2},
+       {q:'What is the superlative of "good"?',o:['Gooder','The goodest','Better','The best'],ok:3},
+       {q:'Complete: "She is ___ girl in class." (tall)',o:['the tallest','taller','most tall','the most tall'],ok:0},
+       {q:'Happy → happier. What rule is this?',o:['Double the consonant','Change y to i','Add more','Add -er normally'],ok:1},
+       {type:'write',q:'Write 3 sentences comparing yourself with a friend or family member: one comparative sentence, one superlative sentence, and one "as...as" sentence.',rubric:'✅ One correct comparative sentence · ✅ One correct superlative sentence · ✅ One correct "as...as" sentence · ✅ Sentences make sense and are grammatically clear',starter:'Comparative: I am taller than ___.\nSuperlative: My ___ is the funniest in my family.\nAs...as: I am as fast as ___.'}
+     ]
+    },
+    {titulo:'Writing — Journal & Biography',sub:'How to organize a text in English',stars:4,
+     flujo:['📓 Journal P1','💭 Journal P2','🔮 Journal P3','👤 Biography P1','🏅 Biography P2','💡 Conectores'],
+     cards:[
+       {e:'📓',t:'JOURNAL ENTRY — Párrafo 1: What happened',d:'¿Dónde estabas y qué pasó? Usar PAST SIMPLE:\nI went / I saw / I found / I walked / I felt\nEmpezá con: "Dear diary, today was a..."'},
+       {e:'💭',t:'JOURNAL ENTRY — Párrafo 2: How I felt',d:'¿Cómo te sentiste y por qué?\nI felt nervous/excited/happy/scared/amazed because...\nI couldn\'t believe that...'},
+       {e:'🔮',t:'JOURNAL ENTRY — Párrafo 3: What I think now',d:'¿Qué reflexión tenés ahora?\nI think... / In my opinion... / I hope.../\nI will never forget this day because...'},
+       {e:'👤',t:'BIOGRAPHY — Párrafo 1: Who they are',d:'¿Quién es? ¿Cuándo y dónde nació?\nHe/She was born in [year] in [place].\nHe/She grew up in... / He/She studied...'},
+       {e:'🏅',t:'BIOGRAPHY — Párrafo 2: What they did',d:'Logros en pasado (PAST SIMPLE):\nHe/She won... / discovered... / invented...\nbecame... / wrote... / played for...'},
+       {e:'💡',t:'CONECTORES CLAVE',d:'SECUENCIA: First / Then / After that / Finally\nADICIÓN: Also / In addition / Furthermore\nCONCLUSIÓN: In conclusion / To sum up / I think that\nCONTRASTE: However / But / Although'}
+     ],
+     teoria:'<div class="info-card"><div class="ie">📰</div><div class="it"><strong>MAGAZINE ARTICLE</strong><span>Título llamativo → Párrafo intro (qué, quién, dónde, cuándo) → Desarrollo con detalles → Conclusión/opinión. Vocabulario útil: according to, experts say, this shows that, as a result, furthermore.</span></div></div>'+
+       '<div class="info-card"><div class="ie">🔤</div><div class="it"><strong>PAST SIMPLE — verbos regulares</strong><span>Se forma agregando -ED al verbo:\nwalk → walked / play → played / discover → discovered\nSi termina en -e: solo agregar -d: love→loved\nSi termina en consonante+y: cambiar y→ied: study→studied</span></div></div>',
+     videos:[],
+     juegos:[],
+     quiz:[
+       {q:'In a journal entry, what tense for what happened?',o:['Present simple','Future','Past simple','Present continuous'],ok:2},
+       {q:'In a biography, what goes in the FIRST paragraph?',o:['Achievements','Who they are and when/where born','Your opinion','The end of their life'],ok:1},
+       {q:'Which connector shows the FINAL event?',o:['First','Then','After that','Finally'],ok:3},
+       {q:'"She discovered penicillin in 1928" — what tense?',o:['Present simple','Past simple','Future','Present perfect'],ok:1},
+       {q:'Complete: "study" in past simple is...',o:['studyed','studiyed','studied','studid'],ok:2},
+       {type:'write',q:'Write a short journal entry (3-4 sentences) about something that happened to you this week. Use Past Simple and say how you felt.',rubric:'✅ Uses Past Simple correctly · ✅ Says how they felt and why · ✅ At least 3 sentences · ✅ Makes sense and is on topic',starter:'This week I ___ (what happened). I felt ___ because ___.'}
+     ]
+    },
+    {titulo:'Trinity: Comparison Report & Magazine Article',sub:'Los dos formatos de escritura más nuevos',stars:4,
+     flujo:['⚖️ Comparison report','📰 Magazine article','🔑 Linking words','✍️ Structure','💡 Trinity tips'],
+     cards:[
+       {e:'⚖️',t:'WHAT IS A COMPARISON & CONTRAST REPORT?',d:'It compares two things (places, animals, characters) showing what is similar (comparison) and what is different (contrast). It usually has: an introduction, a paragraph about similarities, a paragraph about differences, and a conclusion.'},
+       {e:'📰',t:'WHAT IS A MAGAZINE ARTICLE?',d:'A short text written to inform or entertain readers. It has: a catchy title, an interesting introduction, organized paragraphs with facts or opinions, and sometimes subheadings or a fun fact box.'},
+       {e:'🔑',t:'LINKING WORDS YOU NEED',d:'For similarities: "both... and", "also", "similarly".\nFor differences: "but", "however", "while", "on the other hand".\nExample: "Both cats and dogs are pets, but cats are more independent."'},
+       {e:'✍️',t:'BASIC STRUCTURE (Comparison Report)',d:'1. Introduction: what you are comparing.\n2. Similarities paragraph.\n3. Differences paragraph.\n4. Conclusion: your opinion or a summary.'},
+       {e:'💡',t:'TRINITY TIPS',d:'Speak and write in complete sentences.\nUse linking words so it sounds more natural.\nClear and organized is better than fancy and confusing — don\'t worry about being perfect.'}
+     ],
+     teoria:'<div class="info-card"><div class="ie">📰</div><div class="it"><strong>MAGAZINE ARTICLE — STRUCTURE (extra)</strong><span>Title (catchy) → Introduction (hook the reader) → Body paragraphs (facts, examples, maybe subheadings) → Conclusion or fun fact. Tip: read it out loud — does it sound interesting to a reader, not just correct?</span></div></div>',
+     videos:[],
+     juegos:[],
+     quiz:[
+       {q:'A comparison and contrast report needs to show...',o:['Only differences','Only similarities','Both similarities AND differences','Just an opinion'],ok:2},
+       {q:'Which linking word is used to show a DIFFERENCE?',o:['Also','However','Both','Similarly'],ok:1},
+       {q:'A magazine article usually starts with...',o:['A boring list','A catchy title and hook','Just a date','Nothing, straight to facts'],ok:1},
+       {type:'write',q:'Write a short comparison & contrast paragraph (4-5 sentences) comparing two animals, places, or characters. Use at least one linking word for similarity and one for difference.',rubric:'✅ Mentions at least one similarity · ✅ Mentions at least one difference · ✅ Uses at least one linking word (both/also/but/however) · ✅ At least 4-5 sentences · ✅ Makes sense',starter:'Both ___ and ___ are similar because they ___. However, ___ is different because ___. In my opinion, ___.'},
+       {type:'write',q:'Write the opening of a magazine article about a topic you like (a sport, a game, an animal, a place): a title + 2-3 sentences.',rubric:'✅ Has a catchy title · ✅ Introduction hooks the reader · ✅ At least 2-3 sentences · ✅ Makes sense and stays on topic',starter:'Title: ___!\nDid you know that ___? In this article, you will learn about ___.'}
+     ]
+    }
+  ]},
+  mate:{nombre:'🔢 Matemática / Maths',temas:[
+    {titulo:'Proporcionalidad directa',sub:'Cuando las cosas crecen juntas',stars:3,
+     flujo:['📈 Qué es','🍫 Ejemplo','🔢 Constante','📋 Tabla','⚠️ Cuándo NO','💡 Truco'],
+     cards:[
+       {e:'📈',t:'¿QUÉ ES?',d:'Dos cantidades son proporcionales cuando al multiplicar una, la otra se multiplica igual. Si una se duplica, la otra también se duplica.'},
+       {e:'🍫',t:'EJEMPLO — alfajores',d:'1 alfajor = $500\n2 alfajores = $1.000\n3 alfajores = $1.500\n¿Ves el patrón? Siempre × el mismo número.'},
+       {e:'🔢',t:'CONSTANTE DE PROPORCIONALIDAD',d:'Es el número por el que siempre multiplicás.\nEn el ejemplo: la constante es 500.\nPrecio = cantidad × 500'},
+       {e:'📋',t:'CÓMO RESOLVER',d:'1. Encontrás la constante (dividís precio/cantidad)\n2. Multiplicás la constante × lo que te piden\nEj: ¿Cuánto cuestan 7 alfajores? 7 × 500 = $3.500'},
+       {e:'⚠️',t:'CUÁNDO NO ES PROPORCIONAL',d:'Si hay más personas en el cuarto → menos espacio por persona. Al crecer una, la otra BAJA. Eso es proporcionalidad INVERSA, no directa.'},
+       {e:'💡',t:'TRUCO PARA VERIFICAR',d:'¿Al duplicar la cantidad, el precio también se duplica? → ¡Es proporcional directa!\nEj: 2 pelotas=$20, 4 pelotas=$40 ✓'}
+     ],
+     mathVisual:'<div class="math-visual">'+
+       '<h4>📊 Tabla de proporcionalidad — Alfajores</h4>'+
+       '<svg viewBox="0 0 300 120" width="300" height="120" xmlns="http://www.w3.org/2000/svg">'+
+       '<rect x="0" y="0" width="300" height="120" rx="8" fill="#F8F7F3"/>'+
+       '<rect x="0" y="0" width="300" height="35" rx="8" fill="#1B2D6B"/>'+
+       '<rect x="0" y="28" width="300" height="7" fill="#1B2D6B"/>'+
+       '<text x="35" y="22" text-anchor="middle" font-size="11" fill="white" font-weight="800" font-family="sans-serif">Cant.</text>'+
+       '<text x="95" y="22" text-anchor="middle" font-size="11" fill="white" font-weight="800" font-family="sans-serif">Precio</text>'+
+       '<text x="155" y="22" text-anchor="middle" font-size="11" fill="white" font-weight="800" font-family="sans-serif">÷ cant.</text>'+
+       '<text x="230" y="22" text-anchor="middle" font-size="11" fill="white" font-weight="800" font-family="sans-serif">Constante</text>'+
+       '<text x="35" y="55" text-anchor="middle" font-size="12" fill="#1B2D6B" font-weight="700" font-family="sans-serif">1</text>'+
+       '<text x="95" y="55" text-anchor="middle" font-size="12" fill="#1B2D6B" font-family="sans-serif">$500</text>'+
+       '<text x="155" y="55" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="sans-serif">500÷1</text>'+
+       '<text x="230" y="55" text-anchor="middle" font-size="13" fill="#27AE60" font-weight="900" font-family="sans-serif">500</text>'+
+       '<rect x="5" y="62" width="290" height="1" fill="#E2E8F0"/>'+
+       '<text x="35" y="80" text-anchor="middle" font-size="12" fill="#1B2D6B" font-weight="700" font-family="sans-serif">3</text>'+
+       '<text x="95" y="80" text-anchor="middle" font-size="12" fill="#1B2D6B" font-family="sans-serif">$1.500</text>'+
+       '<text x="155" y="80" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="sans-serif">1500÷3</text>'+
+       '<text x="230" y="80" text-anchor="middle" font-size="13" fill="#27AE60" font-weight="900" font-family="sans-serif">500</text>'+
+       '<rect x="5" y="87" width="290" height="1" fill="#E2E8F0"/>'+
+       '<text x="35" y="108" text-anchor="middle" font-size="12" fill="#1B2D6B" font-weight="700" font-family="sans-serif">7</text>'+
+       '<text x="95" y="108" text-anchor="middle" font-size="12" fill="#CC0000" font-weight="800" font-family="sans-serif">?</text>'+
+       '<text x="155" y="108" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="sans-serif">7×500</text>'+
+       '<text x="230" y="108" text-anchor="middle" font-size="13" fill="#CC0000" font-weight="900" font-family="sans-serif">$3.500</text>'+
+       '</svg>'+
+       '<p class="math-note">La constante siempre da el mismo número — eso confirma que ES proporcional.</p>'+
+       '</div>'+
+       '<div class="math-paper">'+
+       '<h4>✏️ Ahora hacelo vos en papel</h4>'+
+       '<p>3 entradas de cine cuestan $2.400.<br>¿Cuánto cuestan 5 entradas?</p>'+
+       '<p style="margin-top:.5rem">Paso 1: Encontrá la constante → 2400 ÷ 3 = ___<br>Paso 2: Multiplicá → ___ × 5 = ___</p>'+
+       '<div class="try">Respuesta: $4.000</div>'+
+       '</div>',
+     teoria:'<div class="info-card"><div class="ie">🔗</div><div class="it"><strong>PROPORCIONALIDAD INVERSA (extra)</strong><span>Cuando al aumentar una cantidad, la otra DISMINUYE. Ej: más operarios → menos días de trabajo. Si 2 operarios tardan 10 días, 5 operarios tardan 4 días. El producto siempre da el mismo número: 2×10=20, 5×4=20.</span></div></div>',
+     videos:[
+       {e:'📊',t:'Proporcionalidad directa',c:'Khan Academy',d:'6 min',embed:'mjSwkBqJ7-g'}
+     ],
+     juegos:[],
+     quiz:[
+       {q:'Si 1 kilo de manzanas cuesta $800, ¿cuánto cuestan 4 kilos?',o:['$2.400','$3.200','$4.000','$1.600'],ok:1},
+       {q:'¿Cuál ES proporcionalidad directa?',o:['Más velocidad → menos tiempo','Más chocolates → más plata','Más personas → menos espacio','Más horas durmiendo → menos cansancio'],ok:1},
+       {q:'Si 3 latas cuestan $1.500, ¿cuál es la constante?',o:['$3.000','$4.500','$500','$300'],ok:2},
+       {q:'Si 5 entradas cuestan $2.500, ¿cuánto cuestan 8?',o:['$3.500','$4.000','$4.500','$5.000'],ok:1},
+       {q:'¿Cómo verificás si hay proporcionalidad directa?',o:['Si la suma es igual','Si al duplicar uno el otro también se duplica','Si los dos son iguales','Si la diferencia es cero'],ok:1},
+       {type:'num',q:'Si 1 alfajor cuesta $500, ¿cuánto cuestan 9 alfajores? (Escribí solo el número, sin el $)',ok:4500}
+     ]
+    },
+    {titulo:'Gráficos de barras y torta',sub:'Leer, interpretar y crear datos',stars:3,
+     flujo:['📊 Barras','🥧 Torta','🔍 Cómo leer','📐 Porcentajes','❓ Preguntas típicas','💡 Inglés'],
+     cards:[
+       {e:'📊',t:'GRÁFICO DE BARRAS (Bar chart)',d:'Cada barra = una categoría.\nLa ALTURA de la barra = el VALOR.\nEje horizontal (X) = categorías.\nEje vertical (Y) = cantidades o valores.'},
+       {e:'🥧',t:'GRÁFICO DE TORTA (Pie chart)',d:'El círculo completo = 100% del total.\nCada tajada = una parte del total.\nTajada más grande = valor más alto.\nSe usan fracciones o porcentajes.'},
+       {e:'🔍',t:'CÓMO LEER UNA BARRA',d:'1. Mirá la barra que te interesa.\n2. Seguí horizontalmente hasta el eje Y.\n3. Leé el número que marca.\nSiempre fijate qué indica el eje Y (unidades).'},
+       {e:'📐',t:'PORCENTAJES EN LA TORTA',d:'1/2 del círculo = 50%\n1/4 del círculo = 25%\n3/4 del círculo = 75%\n1/3 del círculo ≈ 33%'},
+       {e:'❓',t:'PREGUNTAS TÍPICAS DEL EXAMEN',d:'¿Cuál es el valor más alto/más bajo?\n¿Cuánto es la diferencia entre X e Y?\n¿Qué porcentaje representa la tajada de...?\n¿Cuánto es el total de todos los valores?'},
+       {e:'💡',t:'VOCABULARIO EN INGLÉS',d:'Bar chart = gráfico de barras\nPie chart = gráfico de torta\nData = datos / Percentage = porcentaje\nAxis = eje / Title = título\nLegend = referencia'}
+     ],
+     mathVisual:'<div class="math-visual">'+
+       '<h4>📊 Ejemplo: deportes favoritos del grado</h4>'+
+       '<svg viewBox="0 0 280 160" width="280" height="160" xmlns="http://www.w3.org/2000/svg">'+
+       '<rect x="0" y="0" width="280" height="160" rx="8" fill="#F8F7F3"/>'+
+       '<line x1="40" y1="130" x2="260" y2="130" stroke="#ccc" stroke-width="1.5"/>'+
+       '<line x1="40" y1="130" x2="40" y2="10" stroke="#ccc" stroke-width="1.5"/>'+
+       '<line x1="40" y1="104" x2="260" y2="104" stroke="#eee" stroke-width="1"/>'+
+       '<line x1="40" y1="78" x2="260" y2="78" stroke="#eee" stroke-width="1"/>'+
+       '<line x1="40" y1="52" x2="260" y2="52" stroke="#eee" stroke-width="1"/>'+
+       '<line x1="40" y1="26" x2="260" y2="26" stroke="#eee" stroke-width="1"/>'+
+       '<text x="33" y="133" text-anchor="end" font-size="9" fill="#888" font-family="sans-serif">0</text>'+
+       '<text x="33" y="107" text-anchor="end" font-size="9" fill="#888" font-family="sans-serif">5</text>'+
+       '<text x="33" y="81" text-anchor="end" font-size="9" fill="#888" font-family="sans-serif">10</text>'+
+       '<text x="33" y="55" text-anchor="end" font-size="9" fill="#888" font-family="sans-serif">15</text>'+
+       '<text x="33" y="29" text-anchor="end" font-size="9" fill="#888" font-family="sans-serif">20</text>'+
+       '<rect x="55" y="26" width="35" height="104" fill="#CC0000" rx="3"/>'+
+       '<text x="72" y="24" text-anchor="middle" font-size="10" fill="#CC0000" font-weight="800" font-family="sans-serif">20</text>'+
+       '<text x="72" y="145" text-anchor="middle" font-size="9" fill="#444" font-family="sans-serif">⚽ Fútbol</text>'+
+       '<rect x="110" y="78" width="35" height="52" fill="#1B2D6B" rx="3"/>'+
+       '<text x="127" y="76" text-anchor="middle" font-size="10" fill="#1B2D6B" font-weight="800" font-family="sans-serif">10</text>'+
+       '<text x="127" y="145" text-anchor="middle" font-size="9" fill="#444" font-family="sans-serif">🏀 Básquet</text>'+
+       '<rect x="165" y="52" width="35" height="78" fill="#27AE60" rx="3"/>'+
+       '<text x="182" y="50" text-anchor="middle" font-size="10" fill="#27AE60" font-weight="800" font-family="sans-serif">15</text>'+
+       '<text x="182" y="145" text-anchor="middle" font-size="9" fill="#444" font-family="sans-serif">🏊 Natación</text>'+
+       '<rect x="220" y="104" width="35" height="26" fill="#F5C842" rx="3"/>'+
+       '<text x="237" y="102" text-anchor="middle" font-size="10" fill="#B8971A" font-weight="800" font-family="sans-serif">5</text>'+
+       '<text x="237" y="145" text-anchor="middle" font-size="9" fill="#444" font-family="sans-serif">🎾 Tenis</text>'+
+       '<text x="150" y="157" text-anchor="middle" font-size="9" fill="#888" font-family="sans-serif">Alumnos: 50 total</text>'+
+       '</svg>'+
+       '<p class="math-note">Fútbol tiene 20 alumnos. ¿Cuánto más que Tenis? 20-5=15</p>'+
+       '</div>'+
+       '<div class="math-visual">'+
+       '<h4>🥧 El mismo ejemplo como torta</h4>'+
+       '<svg viewBox="0 0 200 140" width="200" height="140" xmlns="http://www.w3.org/2000/svg">'+
+       '<rect x="0" y="0" width="200" height="140" rx="8" fill="#F8F7F3"/>'+
+       '<circle cx="75" cy="70" r="55" fill="#F5C842"/>'+
+       '<path d="M75 70 L75 15 A55 55 0 0 1 127 42 Z" fill="#CC0000"/>'+
+       '<path d="M75 70 L127 42 A55 55 0 0 1 127 98 Z" fill="#27AE60"/>'+
+       '<path d="M75 70 L127 98 A55 55 0 0 1 75 125 Z" fill="#1B2D6B"/>'+
+       '<text x="85" y="42" font-size="9" fill="white" font-weight="800" font-family="sans-serif">40%</text>'+
+       '<text x="108" y="75" font-size="9" fill="white" font-weight="800" font-family="sans-serif">30%</text>'+
+       '<text x="88" y="108" font-size="9" fill="white" font-weight="800" font-family="sans-serif">20%</text>'+
+       '<text x="45" y="85" font-size="9" fill="#333" font-weight="800" font-family="sans-serif">10%</text>'+
+       '<rect x="142" y="20" width="10" height="10" fill="#CC0000" rx="2"/><text x="155" y="29" font-size="9" fill="#444" font-family="sans-serif">⚽ Fútbol</text>'+
+       '<rect x="142" y="40" width="10" height="10" fill="#1B2D6B" rx="2"/><text x="155" y="49" font-size="9" fill="#444" font-family="sans-serif">🏀 Básquet</text>'+
+       '<rect x="142" y="60" width="10" height="10" fill="#27AE60" rx="2"/><text x="155" y="69" font-size="9" fill="#444" font-family="sans-serif">🏊 Natación</text>'+
+       '<rect x="142" y="80" width="10" height="10" fill="#F5C842" rx="2"/><text x="155" y="89" font-size="9" fill="#444" font-family="sans-serif">🎾 Tenis</text>'+
+       '</svg>'+
+       '<p class="math-note">Fútbol = 20/50 = 40% del total</p>'+
+       '</div>'+
+       '<div class="math-paper">'+
+       '<h4>✏️ Ahora respondé en papel</h4>'+
+       '<p>Mirando el gráfico de barras de arriba:<br>1. ¿Cuántos alumnos prefieren natación?<br>2. ¿Cuánto es la diferencia entre fútbol y básquet?<br>3. ¿Qué porcentaje del total prefiere tenis?</p>'+
+       '<div class="try">Respuestas: 1→15 / 2→10 / 3→10%</div>'+
+       '</div>',
+     videos:[
+       {e:'🥧',t:'Pie charts for kids — Math Antics',c:'Math Antics',d:'5 min',embed:'OnnKmQ5hs0Q'}
+     ],
+     juegos:[],
+     quiz:[
+       {q:'En un gráfico de torta, si una tajada es 1/2, ¿qué porcentaje es?',o:['25%','75%','50%','33%'],ok:2},
+       {q:'En un gráfico de barras, ¿qué indica la ALTURA de cada barra?',o:['La categoría','El valor o cantidad','El color','El porcentaje total'],ok:1},
+       {q:'En enero hubo 40 ventas, en febrero 60. ¿Cuánto fue la diferencia?',o:['100','80','20','40'],ok:2},
+       {q:'¿Cómo se dice "gráfico de torta" en inglés?',o:['Bar chart','Line graph','Pie chart','Data chart'],ok:2},
+       {q:'Si 25% de 40 alumnos prefiere matemática, ¿cuántos son?',o:['5','10','15','20'],ok:1},
+       {type:'num',q:'En el gráfico de barras, Natación tiene 15 alumnos y Tenis tiene 5. ¿Cuál es la diferencia? (solo el número)',ok:10}
+     ]
+    },
+    {titulo:'Fracciones con distinto denominador',sub:'Sumar, restar y comparar fracciones',stars:4,
+     flujo:['🍕 Fracción','🔢 Denominador','🔄 Común denominador','➕ Sumar/Restar','⚖️ Comparar','💡 Truco'],
+     cards:[
+       {e:'🍕',t:'¿QUÉ ES UNA FRACCIÓN?',d:'Una fracción representa una parte de un todo. Tiene un numerador (arriba, cuántas partes tenés) y un denominador (abajo, en cuántas partes se dividió el todo). Ej: 3/4 = 3 de 4 partes.'},
+       {e:'🔢',t:'¿POR QUÉ IMPORTA EL DENOMINADOR?',d:'Dos fracciones con el MISMO denominador se pueden sumar o restar directo. Pero si son distintos (ej: 1/2 y 1/3), primero hay que igualarlos — no se puede sumar "peras con manzanas".'},
+       {e:'🔄',t:'CÓMO ENCONTRAR UN DENOMINADOR COMÚN',d:'Buscás un número que sea múltiplo de los dos denominadores.\nEj: 1/2 y 1/3 → el 6 es múltiplo de 2 y de 3.\n1/2 = 3/6 (multiplicás arriba y abajo por 3)\n1/3 = 2/6 (multiplicás arriba y abajo por 2)'},
+       {e:'➕',t:'SUMAR CON DISTINTO DENOMINADOR',d:'1. Buscás el denominador común.\n2. Convertís las dos fracciones.\n3. Sumás SOLO los numeradores (el denominador queda igual).\nEj: 1/2 + 1/3 = 3/6 + 2/6 = 5/6'},
+       {e:'⚖️',t:'CÓMO COMPARAR CUÁL ES MÁS GRANDE',d:'Convertí ambas al mismo denominador y compará los numeradores. El que tenga el numerador más grande, es la fracción más grande.\nEj: ¿1/2 o 2/5? → 5/10 vs 4/10 → 1/2 es más grande.'},
+       {e:'💡',t:'TRUCO RÁPIDO',d:'Si no encontrás el mínimo común múltiplo, siempre podés multiplicar los dos denominadores entre sí. Funciona igual, aunque el número te puede quedar más grande de lo necesario.'}
+     ],
+     mathVisual:'<div class="math-visual">'+
+       '<h4>📊 1/2 + 1/3 usando sextos</h4>'+
+       '<svg viewBox="0 0 300 130" width="300" height="130" xmlns="http://www.w3.org/2000/svg">'+
+       '<rect x="0" y="0" width="300" height="130" rx="8" fill="#F8F7F3"/>'+
+       '<text x="10" y="20" font-size="11" font-weight="800" fill="#1B2D6B" font-family="sans-serif">1/2 = 3/6</text>'+
+       '<rect x="10" y="26" width="280" height="22" fill="none" stroke="#1B2D6B" stroke-width="1.5"/>'+
+       '<rect x="10" y="26" width="46.6" height="22" fill="#4A90D9"/><rect x="56.6" y="26" width="46.6" height="22" fill="#4A90D9"/><rect x="103.2" y="26" width="46.6" height="22" fill="#4A90D9"/>'+
+       '<line x1="149.8" y1="26" x2="149.8" y2="48" stroke="#1B2D6B" stroke-width="1"/><line x1="196.4" y1="26" x2="196.4" y2="48" stroke="#1B2D6B" stroke-width="1"/><line x1="243" y1="26" x2="243" y2="48" stroke="#1B2D6B" stroke-width="1"/>'+
+       '<text x="10" y="70" font-size="11" font-weight="800" fill="#CC0000" font-family="sans-serif">1/3 = 2/6</text>'+
+       '<rect x="10" y="76" width="280" height="22" fill="none" stroke="#1B2D6B" stroke-width="1.5"/>'+
+       '<rect x="10" y="76" width="46.6" height="22" fill="#E74C3C"/><rect x="56.6" y="76" width="46.6" height="22" fill="#E74C3C"/>'+
+       '<line x1="103.2" y1="76" x2="103.2" y2="98" stroke="#1B2D6B" stroke-width="1"/><line x1="149.8" y1="76" x2="149.8" y2="98" stroke="#1B2D6B" stroke-width="1"/><line x1="196.4" y1="76" x2="196.4" y2="98" stroke="#1B2D6B" stroke-width="1"/><line x1="243" y1="76" x2="243" y2="98" stroke="#1B2D6B" stroke-width="1"/>'+
+       '<text x="150" y="118" text-anchor="middle" font-size="12" font-weight="900" fill="#27AE60" font-family="sans-serif">Juntos ocupan 5 de los 6 espacios = 5/6</text>'+
+       '</svg>'+
+       '</div>'+
+       '<div class="math-paper">'+
+       '<h4>✏️ Ahora hacelo vos en papel</h4>'+
+       '<p>Sumá: 1/4 + 1/2</p>'+
+       '<p style="margin-top:.5rem">Paso 1: denominador común de 4 y 2 → ___<br>Paso 2: convertí las dos fracciones → ___ + ___<br>Paso 3: sumá los numeradores → ___</p>'+
+       '<div class="try">Respuesta: 3/4</div>'+
+       '</div>',
+     teoria:'<div class="info-card"><div class="ie">🟰</div><div class="it"><strong>FRACCIONES EQUIVALENTES (extra)</strong><span>Dos fracciones son equivalentes si representan la misma parte del todo, aunque se vean distintas. Ej: 1/2 = 2/4 = 3/6 = 4/8. Se obtienen multiplicando (o dividiendo) arriba y abajo por el mismo número.</span></div></div>',
+     videos:[],
+     juegos:[],
+     quiz:[
+       {q:'¿Qué representa el denominador de una fracción?',o:['En cuántas partes se dividió el total','Cuántas partes tenés','El resultado final','Un número aparte sin importancia'],ok:0},
+       {q:'¿Por qué no podés sumar 1/2 + 1/3 directamente?',o:['Porque tienen distinto denominador','Porque son negativas','Porque no se pueden sumar fracciones nunca','Porque el numerador es impar'],ok:0},
+       {type:'num',q:'1/2 + 1/3 convertido a sextos da 3/6 + 2/6. ¿Cuál es el numerador del resultado final? (solo el número)',ok:5},
+       {q:'¿Cuál es más grande: 1/2 o 2/5?',o:['1/2','2/5','Son iguales','No se puede saber'],ok:0},
+       {type:'num',q:'Si convertís 1/4 a octavos, ¿cuál es el nuevo numerador? (solo el número)',ok:2}
+     ]
+    },
+    {titulo:'Círculo y circunferencia',sub:'Radio, diámetro y la diferencia entre los dos',stars:3,
+     flujo:['⭕ Círculo','🔵 Circunferencia','📏 Radio','📐 Diámetro','🔄 Relación r y d','💡 Truco'],
+     cards:[
+       {e:'⭕',t:'¿QUÉ ES EL CÍRCULO?',d:'Es la superficie completa, la parte "rellena". Cuando pintás un círculo, pintás todo lo de adentro — como una pizza entera.'},
+       {e:'🔵',t:'¿QUÉ ES LA CIRCUNFERENCIA?',d:'Es solo el borde, la línea curva que rodea al círculo — como el molde redondo, sin la masa de adentro. Cuando trazás una circunferencia, solo dibujás esa línea.'},
+       {e:'📏',t:'RADIO',d:'Es la distancia desde el CENTRO del círculo hasta cualquier punto del borde (la circunferencia). Todos los radios de un mismo círculo miden lo mismo.'},
+       {e:'📐',t:'DIÁMETRO',d:'Es la distancia de un lado al otro del círculo, pasando por el centro. El diámetro divide al círculo en dos mitades iguales.'},
+       {e:'🔄',t:'RELACIÓN ENTRE RADIO Y DIÁMETRO',d:'El diámetro es SIEMPRE el doble del radio: diámetro = radio × 2.\nY al revés: radio = diámetro ÷ 2.\nEj: si el radio mide 5 cm, el diámetro mide 10 cm.'},
+       {e:'💡',t:'TRUCO PARA NO CONFUNDIRLOS',d:'Círculo = toda la superficie (la pizza entera).\nCircunferencia = solo el borde (el molde).\nRadio = del centro al borde.\nDiámetro = de borde a borde, pasando por el centro.'}
+     ],
+     mathVisual:'<div class="math-visual">'+
+       '<h4>📊 Radio y diámetro</h4>'+
+       '<svg viewBox="0 0 300 170" width="300" height="170" xmlns="http://www.w3.org/2000/svg">'+
+       '<rect x="0" y="0" width="300" height="170" rx="8" fill="#F8F7F3"/>'+
+       '<circle cx="150" cy="90" r="60" fill="none" stroke="#1B2D6B" stroke-width="2.5"/>'+
+       '<line x1="90" y1="90" x2="210" y2="90" stroke="#4A90D9" stroke-width="1.5" stroke-dasharray="4,3"/>'+
+       '<line x1="150" y1="90" x2="150" y2="30" stroke="#27AE60" stroke-width="2.5"/>'+
+       '<circle cx="150" cy="90" r="3.5" fill="#CC0000"/>'+
+       '<text x="150" y="20" text-anchor="middle" font-size="11" font-weight="800" fill="#1B2D6B" font-family="sans-serif">circunferencia (el borde)</text>'+
+       '<text x="160" y="62" font-size="11" font-weight="900" fill="#27AE60" font-family="sans-serif">radio (r)</text>'+
+       '<text x="150" y="150" text-anchor="middle" font-size="11" font-weight="900" fill="#1E5A96" font-family="sans-serif">diámetro (d) = 2 × radio</text>'+
+       '</svg>'+
+       '</div>'+
+       '<div class="math-paper">'+
+       '<h4>✏️ Ahora hacelo vos en papel</h4>'+
+       '<p>La rueda de una bici tiene un radio de 30 cm.</p>'+
+       '<p style="margin-top:.5rem">¿Cuánto mide el diámetro? ___\n(Pista: diámetro = radio × 2)</p>'+
+       '<div class="try">Respuesta: 60 cm</div>'+
+       '</div>',
+     teoria:'<div class="info-card"><div class="ie">🎯</div><div class="it"><strong>CÍRCULOS Y CIRCUNFERENCIAS EN LA VIDA REAL</strong><span>La rueda de una bici, una moneda, el aro de básquet, un plato — todos son círculos. El borde de una pileta redonda es su circunferencia. Por eso en "embocar a la lata" medir el radio de la lata ayuda a entender qué tan grande es el círculo de la boca.</span></div></div>',
+     videos:[],
+     juegos:[],
+     quiz:[
+       {q:'¿Cuál es la diferencia entre círculo y circunferencia?',o:['Círculo es solo el borde, circunferencia es toda la superficie','Círculo es toda la superficie, circunferencia es solo el borde','Son exactamente lo mismo','El círculo es cuadrado'],ok:1},
+       {q:'¿Qué es el radio?',o:['La distancia del centro al borde','La distancia de borde a borde','El área total','El doble del diámetro'],ok:0},
+       {q:'¿Cómo se relacionan el radio y el diámetro?',o:['Son siempre iguales','El diámetro es el doble del radio','El radio es el doble del diámetro','No tienen relación'],ok:1},
+       {type:'num',q:'Si el radio de una pelota mide 7 cm, ¿cuánto mide el diámetro? (solo el número, en cm)',ok:14},
+       {type:'num',q:'Si el diámetro de una rueda mide 30 cm, ¿cuánto mide el radio? (solo el número, en cm)',ok:15}
+     ]
+    }
+  ]},
+  sociales:{nombre:'🌎 Cs. Sociales',temas:[
+    {titulo:'Independencia Argentina',sub:'Congreso de Tucumán, 25 de Mayo e Invasiones Inglesas',stars:4,
+     flujo:['📅 1810 Mayo','⚔️ Invasiones','🏛️ 1816 Tucumán','📜 9 Julio 1816','🔗 La cadena','⚠️ Diferencia clave'],
+     cards:[
+       {e:'📅',t:'25 DE MAYO DE 1810',d:'Se forma la Primera Junta — el primer gobierno propio. Pero todavía NO declararon independencia de España. El virrey Cisneros fue reemplazado.'},
+       {e:'⚔️',t:'INVASIONES INGLESAS AL RÍO DE LA PLATA',d:'1806 — Primera invasión: ingleses toman Buenos Aires. El virrey Sobremonte huyó.\n1807 — Segunda invasión: la población y las milicias defienden la ciudad y los vencen sin ayuda del rey.'},
+       {e:'🏆',t:'CONSECUENCIAS DE LAS INVASIONES',d:'Los criollos descubrieron que podían defenderse solos, sin España. Eso les dio confianza para luchar por la independencia. Las milicias criollas ganaron protagonismo.'},
+       {e:'🏛️',t:'CONGRESO DE TUCUMÁN 1816',d:'Representantes de las Provincias Unidas del Río de la Plata se reúnen en Tucumán para decidir el futuro del país.'},
+       {e:'📜',t:'9 DE JULIO DE 1816',d:'Se declara oficialmente la INDEPENDENCIA de España. Se firma el Acta de Declaración de Independencia. ¡Día de la Independencia Argentina!'},
+       {e:'⚠️',t:'DIFERENCIA CLAVE — ¡No confundirlos!',d:'1810 = primer gobierno propio (Buenos Aires) — NO es la independencia.\n1816 = independencia oficial (Tucumán) — ES la declaración formal.\n1806-1807 = Invasiones Inglesas — antecedente importante.'}
+     ],
+     teoria:'<div class="info-card"><div class="ie">🔗</div><div class="it"><strong>LA CADENA DE EVENTOS</strong><span>Exploración → Colonización → Reformas Borbónicas (sacan a criollos del poder) → Invasiones Inglesas (criollos descubren su fuerza) → Revolución de Mayo 1810 (primer gobierno propio) → Congreso de Tucumán 1816 (independencia oficial).</span></div></div>'+
+       '<div class="info-card"><div class="ie">📋</div><div class="it"><strong>CUADRO COMPARATIVO INVASIONES INGLESAS</strong><span>1ra invasión (1806): Virrey=Sobremonte (huyó), Resultado=ingleses ganan temporalmente, Reconquista=Santiago de Liniers los expulsa.\n2da invasión (1807): Virrey=Liniers, Resultado=la población defiende y vence, Consecuencia=criollos ganan confianza.</span></div></div>',
+     videos:[
+       {e:'📅',t:'¿Qué pasó el 25 de Mayo?',c:'Zamba',d:'6 min',embed:'nk47_v00buw'}
+     ],
+     juegos:[],
+     quiz:[
+       {q:'¿En qué ciudad se firmó la Independencia argentina?',o:['Buenos Aires','Córdoba','Tucumán','Salta'],ok:2},
+       {q:'¿En qué año se declaró la Independencia de Argentina?',o:['1810','1816','1820','1807'],ok:1},
+       {q:'¿Qué pasó el 25 de Mayo de 1810?',o:['Se firmó la independencia','Se formó el primer gobierno propio','Llegaron los ingleses','Se creó el Congreso'],ok:1},
+       {q:'¿Qué consecuencia importante tuvieron las Invasiones Inglesas?',o:['España recuperó el control','Los criollos descubrieron que podían defenderse solos','El virrey Sobremonte fue héroe','Se firmó la independencia'],ok:1},
+       {q:'¿Cuántos años pasaron entre la Revolución de Mayo y la Independencia?',o:['4 años','6 años','10 años','2 años'],ok:1}
+     ]
+    },
+    {titulo:'Agua para el futuro',sub:'Potabilización, depuración y energía hidroeléctrica',stars:4,
+     flujo:['🚰 Potabilización','🚽 Depuración','⚡ Energía hidroeléctrica','🏢 Organismos','🌎 Por qué importa','📊 Cuadro comparativo'],
+     cards:[
+       {e:'🚰',t:'¿QUÉ ES LA POTABILIZACIÓN?',d:'Es el proceso que transforma el agua de un río en agua segura para tomar. Pasos principales: captación, sedimentación, filtración y cloración. En Río Cuarto lo hace el EMOS.'},
+       {e:'🚽',t:'¿QUÉ ES LA DEPURACIÓN?',d:'Es el proceso inverso: limpiar el agua que ya usamos (de las cloacas) antes de devolverla al río, para no contaminarlo. Sin depuración, el agua sucia volvería directo a la naturaleza.'},
+       {e:'⚡',t:'ENERGÍA HIDROELÉCTRICA',d:'El agua que cae con fuerza (por ejemplo en una represa) hace girar turbinas que generan electricidad. Es una fuente de energía renovable: el agua sigue su ciclo, no se gasta.'},
+       {e:'🏢',t:'¿QUIÉN SE OCUPA DE CADA COSA?',d:'Potabilización y depuración: organismos municipales o provinciales (como el EMOS en Río Cuarto).\nEnergía hidroeléctrica: empresas o entes de energía, estatales o privados.'},
+       {e:'🌎',t:'¿POR QUÉ ES UN TEMA DEL FUTURO?',d:'El agua dulce es limitada. Cómo la potabilizamos, la depuramos y la usamos para energía decide si va a alcanzar para las próximas generaciones — no es un problema de "otro momento", es de ahora.'},
+       {e:'📊',t:'CUADRO COMPARATIVO',d:'Potabilización: agua de río → agua segura para tomar (va HACIA las casas).\nDepuración: agua ya usada → agua limpia para el río (VUELVE de las casas).\nEnergía hidroeléctrica: fuerza del agua que cae → electricidad.\n¡Los tres cuidan o aprovechan el mismo recurso: el agua!'}
+     ],
+     teoria:'<div class="info-card"><div class="ie">🔄</div><div class="it"><strong>NO CONFUNDIR: POTABILIZAR vs DEPURAR</strong><span>Potabilizar = agua de río → agua limpia para tomar (va hacia las casas). Depurar = agua usada de las casas → agua limpia para el río (vuelve de las casas). Son procesos en direcciones opuestas, pero los dos cuidan el agua.</span></div></div>',
+     videos:[],
+     juegos:[],
+     quiz:[
+       {q:'¿Qué hace la potabilización?',o:['Transforma agua de río en agua segura para tomar','Genera electricidad','Contamina el río','Guarda agua en represas'],ok:0},
+       {q:'¿Qué hace la depuración?',o:['Vuelve a ensuciar el agua','Limpia el agua ya usada antes de devolverla al río','Fabrica agua nueva','Es lo mismo que potabilizar'],ok:1},
+       {q:'¿Cómo se genera energía hidroeléctrica?',o:['Quemando agua','Con la fuerza del agua que cae haciendo girar turbinas','Congelando el agua','Con paneles solares en el agua'],ok:1},
+       {q:'En Río Cuarto, ¿qué organismo se ocupa de potabilizar el agua?',o:['El EMOS','La escuela','El club de lectura','El Congreso de Tucumán'],ok:0},
+       {q:'¿Por qué el cuidado del agua es un tema "del futuro" y no solo de hoy?',o:['Porque el agua dulce es limitada y hay que asegurar que alcance más adelante','Porque el agua nunca se puede reciclar','Porque solo se usa en verano','Porque no afecta a nadie'],ok:0}
+     ]
+    }
+  ]},
+  naturales:{nombre:'💧 Cs. Naturales / Science',temas:[
+    {titulo:'El ciclo del agua',sub:'Water cycle, hidrosfera y método científico',stars:4,
+     flujo:['☀️ Evaporación','☁️ Condensación','🌧️ Precipitación','🌊 Colección','🌍 Hidrosfera','🔬 Método científico'],
+     cards:[
+       {e:'☀️',t:'EVAPORACIÓN / EVAPORATION',d:'El sol calienta el agua líquida → se convierte en vapor de agua → sube al cielo.\nTambién pasa con el sudor y los charcos que desaparecen.'},
+       {e:'☁️',t:'CONDENSACIÓN / CONDENSATION',d:'El vapor de agua sube, se enfría → las partículas se juntan → se forman las NUBES.\nComo cuando el espejo del baño se empaña.'},
+       {e:'🌧️',t:'PRECIPITACIÓN / PRECIPITATION',d:'Cuando las nubes tienen demasiada agua → cae como lluvia, nieve, granizo o llovizna.\nDepende de la temperatura del aire.'},
+       {e:'🌊',t:'COLECCIÓN / COLLECTION',d:'El agua que cae se junta en ríos, lagos, océanos y aguas subterráneas.\nEl ciclo comienza de nuevo. ¡El agua nunca se crea ni se destruye!'},
+       {e:'🌍',t:'LA HIDROSFERA',d:'Toda el agua del planeta — océanos, ríos, lagos, hielos polares, aguas subterráneas y vapor de agua.\n97% es salada (océanos). Solo 3% es dulce — y la mayoría está congelada en los polos.'},
+       {e:'🔬',t:'MÉTODO CIENTÍFICO',d:'1. Observación: ¿qué veo?\n2. Pregunta: ¿por qué pasa?\n3. Hipótesis: mi respuesta provisional\n4. Experimento: lo pruebo\n5. Resultado: ¿qué pasó?\n6. Conclusión: ¿tenía razón?'}
+     ],
+     teoria:'<div class="info-card"><div class="ie">💧</div><div class="it"><strong>SOLUBILIDAD</strong><span>La solubilidad es la capacidad de una sustancia (soluto) de disolverse en otra (solvente). Ej: la sal se disuelve fácilmente en agua = es muy soluble. El aceite NO se disuelve en agua = es poco soluble. La temperatura afecta la solubilidad: generalmente más calor → más solubilidad.</span></div></div>'+
+       '<div class="info-card"><div class="ie">🏙️</div><div class="it"><strong>EMOS — RÍO CUARTO</strong><span>El EMOS (Ente Municipal de Obras Sanitarias) potabiliza el agua del Río Cuarto para que llegue limpia a las canillas. Pasos: 1) Captación del río, 2) Sedimentación (decantar partículas), 3) Filtración, 4) Cloración (desinfección), 5) Distribución por cañerías.</span></div></div>',
+     videos:[
+       {e:'🏙️',t:'¿Cómo llega el agua a tu casa? — EMOS',c:'EMOS Río Cuarto',d:'5 min',embed:'Gs1jOv_8mpY'},
+       {e:'💧',t:'El ciclo del agua para niños',c:'YouTube',d:'4 min',embed:'WZWl4XqNYP4'}
+     ],
+     juegos:[],
+     quiz:[
+       {q:'¿Qué proceso convierte el agua líquida en vapor?',o:['Condensación','Precipitación','Evaporación','Infiltración'],ok:2},
+       {q:'¿Cómo se llama toda el agua del planeta?',o:['Biosfera','Atmósfera','Litosfera','Hidrosfera'],ok:3},
+       {q:'¿Qué porcentaje del agua de la Tierra es dulce?',o:['97%','50%','3%','25%'],ok:2},
+       {q:'In the water cycle, what is "precipitation"?',o:['Water turning to vapour','Clouds forming','Water falling as rain or snow','Water in rivers'],ok:2},
+       {q:'¿Cuál es el primer paso del método científico?',o:['Hipótesis','Experimento','Observación','Conclusión'],ok:2}
+     ]
+    },
+    {titulo:'Tipos de suelo',sub:'Arena, arcilla y humus — el experimento de la clase',stars:3,
+     flujo:['🏖️ Suelo arenoso','🧱 Suelo arcilloso','🌱 Humus','💧 Cómo retienen el agua','🔬 El experimento','💡 Por qué importa'],
+     cards:[
+       {e:'🏖️',t:'SUELO ARENOSO',d:'Tiene partículas grandes y sueltas. El agua pasa rápido a través de él (drena rápido) y no retiene mucha humedad. Se siente suelto al tacto.'},
+       {e:'🧱',t:'SUELO ARCILLOSO',d:'Tiene partículas muy finas y compactas. El agua pasa muy lento (drena lento) y queda encharcada arriba. Se siente pegajoso cuando está húmedo.'},
+       {e:'🌱',t:'HUMUS (SUELO FÉRTIL)',d:'Es materia orgánica descompuesta (hojas, restos de plantas y animales). Es oscuro, esponjoso, y retiene agua y nutrientes de forma balanceada — el mejor para las plantas.'},
+       {e:'💧',t:'CÓMO RETIENEN EL AGUA',d:'Arenoso: drena muy rápido, casi no retiene agua.\nArcilloso: drena muy lento, retiene demasiada agua (se encharca).\nHumus: retiene la cantidad justa — ni mucha ni poca.'},
+       {e:'🔬',t:'EL EXPERIMENTO DE LA CLASE',d:'Se pone la misma cantidad de agua sobre distintos tipos de suelo y se cronometra cuánto tarda en filtrarse. El que tarda menos es el más arenoso; el que tarda más (o se encharca) es el más arcilloso.'},
+       {e:'💡',t:'POR QUÉ IMPORTA',d:'El tipo de suelo decide qué se puede cultivar en un lugar. Por eso los agricultores estudian el suelo antes de sembrar — un suelo con mucho humus da mejores cosechas.'}
+     ],
+     teoria:'<div class="info-card"><div class="ie">📚</div><div class="it"><strong>LAS CAPAS DEL SUELO (HORIZONTES)</strong><span>El suelo se organiza en capas: la de arriba (horizonte A) tiene más humus y materia orgánica; las de abajo tienen más roca y minerales, con menos vida.</span></div></div>',
+     videos:[],
+     juegos:[],
+     quiz:[
+       {q:'¿Qué tipo de suelo drena el agua más rápido?',o:['Arenoso','Arcilloso','Humus','Ninguno drena'],ok:0},
+       {q:'¿Qué es el humus?',o:['Un tipo de roca','Materia orgánica descompuesta, ideal para las plantas','Agua subterránea','Un tipo de arena'],ok:1},
+       {q:'¿Qué pasa con el agua en un suelo arcilloso?',o:['Drena instantáneamente','Se encharca porque drena muy lento','Desaparece','Se congela'],ok:1},
+       {type:'num',q:'Si en el experimento el agua tarda 5 segundos en filtrarse en el suelo arenoso y 40 segundos en el arcilloso, ¿cuántos segundos más tardó el arcilloso? (solo el número)',ok:35},
+       {q:'¿Por qué los agricultores estudian el tipo de suelo antes de sembrar?',o:['Porque decide qué se puede cultivar bien ahí','Porque es obligatorio por ley','Porque cambia el clima','No tiene ninguna razón práctica'],ok:0}
+     ]
+    }
+  ]},
+  finanzas:{nombre:'💰 Educación Financiera',temas:[
+    {titulo:'¿Qué es el dinero?',sub:'De dónde viene y para qué sirve',stars:3,
+     flujo:['🪙 Origen','🔄 Trueque','💵 Funciones','🏦 Tipos','💡 Dato'],
+     cards:[
+       {e:'🪙',t:'¿DE DÓNDE SALIÓ EL DINERO?',d:'Antes la gente cambiaba cosas por otras (trueque): 3 gallinas por una vaca, por ejemplo. Era difícil ponerse de acuerdo, así que se inventó el dinero: algo que todos aceptan a cambio de cualquier cosa.'},
+       {e:'🔄',t:'EL PROBLEMA DEL TRUEQUE',d:'Si vos tenías gallinas y necesitabas zapatos, tenías que encontrar a alguien que tuviera zapatos Y quisiera gallinas. ¡Muy complicado! El dinero resolvió ese problema.'},
+       {e:'💵',t:'PARA QUÉ SIRVE EL DINERO',d:'1. Para intercambiar cosas fácilmente.\n2. Para guardar valor (ahorrar).\n3. Para medir cuánto vale algo (precio).'},
+       {e:'🏦',t:'TIPOS DE DINERO',d:'Efectivo: billetes y monedas.\nDigital: tarjetas, transferencias, apps.\nEn Pipo usás estrellas ⭐ que se convierten en pesos $ — ¡es una forma de practicar!'},
+       {e:'💡',t:'DATO CURIOSO',d:'El dinero en sí no vale nada — vale porque TODOS confiamos en que otros lo van a aceptar a cambio de cosas.'}
+     ],
+     videos:[],
+     juegos:[],
+     quiz:[
+       {q:'¿Cómo se llamaba intercambiar cosas antes de que existiera el dinero?',o:['Ahorro','Trueque','Presupuesto','Interés'],ok:1},
+       {q:'¿Cuál NO es una función del dinero?',o:['Guardar valor','Medir el precio de las cosas','Hacerte más alto','Intercambiar fácilmente'],ok:2},
+       {q:'En Pipo, ¿en qué se convierten tus estrellas?',o:['En puntos de videojuego','En pesos $ para tu billetera','En nada, son solo decorativas','En minutos de recreo'],ok:1},
+       {type:'num',q:'Si conseguís 5 estrellas y cada una vale $50, ¿cuántos pesos son en total? (solo el número)',ok:250},
+       {q:'¿Por qué la gente confía en el dinero?',o:['Porque brilla','Porque todos aceptan usarlo para intercambiar','Porque lo dice la tele','Porque no se puede gastar'],ok:1}
+     ]
+    },
+    {titulo:'Ahorrar: necesidades, deseos y metas',sub:'Cómo armar un presupuesto simple',stars:3,
+     flujo:['🎯 Necesidad vs deseo','🐷 Ahorro','📊 Presupuesto','🏆 Metas','💡 Truco'],
+     cards:[
+       {e:'🎯',t:'NECESIDAD VS. DESEO',d:'Necesidad: algo que necesitás sí o sí (comida, ropa para el frío).\nDeseo: algo que te gustaría tener pero podés vivir sin eso (un juego nuevo, un juguete).'},
+       {e:'🐷',t:'¿QUÉ ES AHORRAR?',d:'Ahorrar es guardar parte del dinero que tenés en vez de gastarlo todo, para poder usarlo después en algo importante.'},
+       {e:'📊',t:'PRESUPUESTO SIMPLE',d:'Un presupuesto es un plan de tu plata:\n1. ¿Cuánto tengo?\n2. ¿Cuánto quiero ahorrar?\n3. ¿Cuánto puedo gastar?\nEj: si tenés $1.000, podés ahorrar $400 y gastar $600.'},
+       {e:'🏆',t:'METAS DE AHORRO',d:'Una meta de ahorro es algo que querés comprar juntando plata de a poco. Ej: querés un juego de $3.000 y ahorrás $500 por semana → te toma 6 semanas.'},
+       {e:'💡',t:'TRUCO',d:'Antes de comprar algo, preguntate: ¿esto es una necesidad o un deseo? Si es un deseo, esperá un día antes de decidir — a veces las ganas se te pasan.'}
+     ],
+     videos:[],
+     juegos:[],
+     quiz:[
+       {q:'Tener zapatillas para no andar descalzo es...',o:['Un deseo','Una necesidad','Un ahorro','Un presupuesto'],ok:1},
+       {q:'Un jueguito nuevo, aunque ya tengas uno parecido, es...',o:['Una necesidad','Un deseo','Un gasto obligatorio','Un préstamo'],ok:1},
+       {type:'num',q:'Querés ahorrar $3.000 para un juego y guardás $500 por semana. ¿Cuántas semanas te toma? (solo el número)',ok:6},
+       {q:'¿Qué es un presupuesto?',o:['Un tipo de banco','Un plan de cuánto tenés, ahorrás y gastás','Una tarjeta de crédito','Un tipo de moneda'],ok:1},
+       {q:'¿Qué conviene hacer antes de comprar un deseo (no una necesidad)?',o:['Comprarlo ya','Esperar un día y pensarlo','Pedirlo prestado','Nada, comprar rápido'],ok:1}
+     ]
+    },
+    {titulo:'Bancos, interés y el dólar',sub:'Cómo funciona la plata "de verdad"',stars:4,
+     flujo:['🏦 Bancos','📈 Interés','💱 Peso y dólar','🌍 Tipo de cambio','💡 Conexión con Pipo'],
+     cards:[
+       {e:'🏦',t:'¿QUÉ HACE UN BANCO?',d:'Un banco guarda la plata de la gente de forma segura. También le presta plata a otras personas y les cobra un poquito extra por eso (interés).'},
+       {e:'📈',t:'¿QUÉ ES EL INTERÉS?',d:'Es como un "premio" que te da el banco por dejar tu plata guardada, o lo que vos pagás si el banco te prestó plata a vos.\nEj: guardás $1.000 y el banco te da $50 extra al año — ese $50 es el interés.'},
+       {e:'💱',t:'PESO Y DÓLAR',d:'En Argentina usamos el peso ($). El dólar (u$s) es la moneda de Estados Unidos. Mucha gente ahorra en dólares porque su valor cambia menos con el tiempo.'},
+       {e:'🌍',t:'TIPO DE CAMBIO',d:'El tipo de cambio dice cuántos pesos necesitás para comprar 1 dólar. Si el tipo de cambio es $1.050, necesitás $1.050 para comprar u$s1.'},
+       {e:'💡',t:'CONEXIÓN CON TU BILLETERA DE PIPO',d:'Por eso en tu billetera de Pipo ves tu plata en pesos Y en dólares — ¡así practicás cómo funciona de verdad!'}
+     ],
+     videos:[],
+     juegos:[],
+     quiz:[
+       {q:'¿Para qué sirve un banco?',o:['Solo para dar caramelos','Guardar plata de forma segura y prestarla','Para jugar videojuegos','Para vender ropa'],ok:1},
+       {q:'El interés es...',o:['Una multa por ahorrar','Un premio o costo extra por guardar o pedir plata prestada','Un tipo de moneda','Un impuesto sobre los juguetes'],ok:1},
+       {type:'num',q:'Si el tipo de cambio es $1.000 por dólar, ¿cuántos pesos necesitás para comprar u$s3? (solo el número)',ok:3000},
+       {q:'¿Cuál es la moneda de Argentina?',o:['El dólar','El peso','El euro','El real'],ok:1},
+       {q:'¿Por qué mucha gente ahorra en dólares?',o:['Porque son más lindos','Porque su valor cambia menos con el tiempo','Porque son más livianos','Porque no se pueden gastar'],ok:1}
+     ]
+    }
+  ]}
+};
+
+// ===== ESTADO PERSISTENTE (localStorage + nube opcional) =====
+function saveLocal(){
+  try{ localStorage.setItem('pipo_v6_state', JSON.stringify(currentState())); }catch(e){}
+}
+function saveState(){
+  saveLocal();
+  if(cloudActive() && cCanon(currentState())!==(cloudBase?cCanon(cloudBase):'')) cloudSyncSoon();
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('pipo_v6_state');
+    if(!raw) return;
+    applyState(JSON.parse(raw));
+  }catch(e){}
+}
+
+// ===== NUBE (BEGIN) =====
+// Sincroniza el progreso con Firestore (Firebase) usando su API REST, sin librerías.
+// Completar estos dos datos después de crear el proyecto en Firebase (no son secretos):
+var PIPO_CLOUD={apiKey:'AIzaSyBo1wV63qdDv3sBio2AobCbfKCAf7padB4',projectId:'pipo-salva'};
+var cloudCode='', cloudBase=null, cloudStatus='', cloudBusy=false, cloudAgain=false, cloudTimer=null, cloudLastSync='', cloudLastAttempt=0;
+
+function cloudConfigured(){ return !!(PIPO_CLOUD.apiKey && PIPO_CLOUD.projectId); }
+function cloudActive(){ return cloudConfigured() && !!cloudCode; }
+function cloudLoadDevice(){
+  try{
+    var raw=localStorage.getItem('pipo_cloud');
+    if(raw){ var c=JSON.parse(raw); cloudCode=c.code||''; cloudBase=c.base||null; }
+  }catch(e){}
+}
+function cloudSaveDevice(){
+  try{ localStorage.setItem('pipo_cloud',JSON.stringify({code:cloudCode,base:cloudBase})); }catch(e){}
+}
+function cloudUrl(extra){
+  return 'https://firestore.googleapis.com/v1/projects/'+encodeURIComponent(PIPO_CLOUD.projectId)+
+    '/databases/(default)/documents/pipo/'+encodeURIComponent(cloudCode)+
+    '?key='+encodeURIComponent(PIPO_CLOUD.apiKey)+(extra||'');
+}
+function cloudNormalizeCode(c){ return (c||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+function cloudGenCode(){
+  var al='ABCDEFGHJKLMNPQRSTUVWXYZ23456789', out='', arr=new Uint8Array(12);
+  (window.crypto||window.msCrypto).getRandomValues(arr);
+  for(var i=0;i<12;i++) out+=al.charAt(arr[i]%al.length);
+  return out;
+}
+function cloudFormatCode(c){ return (c||'').replace(/(.{4})(?=.)/g,'$1-'); }
+
+// --- estado actual <-> objeto plano ---
+function currentState(){
+  return {totalStars:totalStars,historial:historial,completados:completados,adminLog:adminLog,avatar:avatar,streak:streak,
+    timeLog:timeLog,pendingWritten:pendingWritten,desempenoLog:desempenoLog,repasoLog:repasoLog,datoLog:datoLog,
+    lastBackup:lastBackup,epoch:epoch};
+}
+function applyState(st){
+  totalStars=st.totalStars||0; historial=st.historial||[]; completados=st.completados||{}; adminLog=st.adminLog||[];
+  if(st.avatar) avatar=st.avatar;
+  if(st.streak) streak=st.streak;
+  timeLog=st.timeLog||{}; pendingWritten=st.pendingWritten||[]; desempenoLog=st.desempenoLog||[];
+  repasoLog=st.repasoLog||{}; datoLog=st.datoLog||{}; lastBackup=st.lastBackup||''; epoch=st.epoch||0;
+}
+
+// --- comparación canónica (ignora el orden de claves y de elementos de listas) ---
+function cCanon(v){
+  if(Array.isArray(v)) return '['+v.map(cCanon).sort().join(',')+']';
+  if(v&&typeof v==='object') return '{'+Object.keys(v).sort().map(function(k){return JSON.stringify(k)+':'+cCanon(v[k]);}).join(',')+'}';
+  return JSON.stringify(v===undefined?null:v);
+}
+
+// --- fusión de 3 vías: base (última sincronización), local (este dispositivo), cloud (nube) ---
+function cMergeCounters(b,l,c){
+  b=b||{}; l=l||{}; c=c||{};
+  var keys={}, out={};
+  Object.keys(l).forEach(function(k){keys[k]=1;}); Object.keys(c).forEach(function(k){keys[k]=1;});
+  Object.keys(keys).forEach(function(k){
+    var v=(c[k]||0)+(l[k]||0)-(b[k]||0);
+    out[k]=v<0?0:v;
+  });
+  return out;
+}
+function cUnion(arrs,max){
+  var seen={}, out=[];
+  arrs.forEach(function(a){ (a||[]).forEach(function(x){
+    var j=cCanon(x); if(!seen[j]){ seen[j]=1; out.push(x); }
+  }); });
+  return max?out.slice(0,max):out;
+}
+function cDate(s){ var p=(s||'').split('/'); return p.length===3?new Date(+p[2],+p[1]-1,+p[0]).getTime():0; }
+function cMergeStates(base,local,cloud){
+  base=base||{};
+  var m={};
+  var v=(cloud.totalStars||0)+(local.totalStars||0)-(base.totalStars||0);
+  m.totalStars=v<0?0:v;
+  m.timeLog=cMergeCounters(base.timeLog,local.timeLog,cloud.timeLog);
+  m.repasoLog=cMergeCounters(base.repasoLog,local.repasoLog,cloud.repasoLog);
+  m.completados=Object.assign({},cloud.completados,local.completados);
+  m.datoLog=Object.assign({},cloud.datoLog,local.datoLog);
+  m.historial=cUnion([local.historial,cloud.historial],30);
+  m.adminLog=cUnion([local.adminLog,cloud.adminLog]);
+  m.desempenoLog=cUnion([local.desempenoLog,cloud.desempenoLog]);
+  var pwMap={}, pwList=[];
+  (local.pendingWritten||[]).concat(cloud.pendingWritten||[]).forEach(function(w){
+    var k=w.materia+'|'+w.tema+'|'+w.pregunta, ex=pwMap[k];
+    if(!ex){ pwMap[k]=w; pwList.push(w); }
+    else if(ex.estado!=='corregida' && w.estado==='corregida'){ pwList[pwList.indexOf(ex)]=w; pwMap[k]=w; }
+  });
+  m.pendingWritten=pwList;
+  var ls=local.streak||{count:0,last:'',awarded:[]}, cs=cloud.streak||{count:0,last:'',awarded:[]};
+  var pick=cDate(ls.last)>cDate(cs.last)?ls:cDate(cs.last)>cDate(ls.last)?cs:((ls.count||0)>=(cs.count||0)?ls:cs);
+  m.streak={count:pick.count||0,last:pick.last||'',awarded:cUnion([ls.awarded,cs.awarded])};
+  m.avatar=(cCanon(local.avatar)!==cCanon(base.avatar))?(local.avatar||cloud.avatar):(cloud.avatar||local.avatar);
+  m.lastBackup=local.lastBackup||cloud.lastBackup||'';
+  m.epoch=Math.max(local.epoch||0,cloud.epoch||0);
+  return m;
+}
+
+// --- red ---
+async function cloudPush(state,updateTime){
+  var body={fields:{state:{stringValue:JSON.stringify(state)},updatedAt:{integerValue:String(Date.now())}}};
+  var extra=updateTime?('&currentDocument.updateTime='+encodeURIComponent(updateTime)):'&currentDocument.exists=false';
+  var r=await fetch(cloudUrl(extra),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(r.ok){
+    cloudBase=JSON.parse(JSON.stringify(state));
+    cloudSaveDevice();
+    return true;
+  }
+  if(r.status===400||r.status===409||r.status===412) return false; // alguien escribió antes: reintentar
+  throw new Error('PATCH '+r.status);
+}
+function cloudRefreshUI(){
+  try{
+    updateStars(); updateAvatarUI();
+    var el=document.getElementById('h-streak'); if(el) el.textContent=streak.count;
+    var ta=document.getElementById('dato-input'); if(!ta||!ta.value) buildDatoWrap();
+    var adm=document.getElementById('s-admin');
+    if(adm&&adm.classList.contains('active')){
+      var ae=document.activeElement;
+      if(!(ae&&adm.contains(ae)&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'))) renderAdmin();
+    }
+  }catch(e){}
+}
+async function cloudSync(){
+  if(!cloudActive()) return false;
+  if(cloudBusy){ cloudAgain=true; return false; }
+  cloudBusy=true; cloudLastAttempt=Date.now();
+  var ok=false;
+  try{
+    for(var attempt=0; attempt<3 && !ok; attempt++){
+      var r=await fetch(cloudUrl());
+      if(r.status===404){
+        ok=await cloudPush(currentState(),null);
+        continue;
+      }
+      if(!r.ok) throw new Error('GET '+r.status);
+      var doc=await r.json();
+      var cloud=JSON.parse(doc.fields.state.stringValue);
+      var local=currentState(), merged;
+      var le=local.epoch||0, ce=cloud.epoch||0;
+      if(ce>le) merged=cloud;
+      else if(le>ce) merged=local;
+      else merged=cMergeStates(cloudBase,local,cloud);
+      applyState(merged);
+      saveLocal();
+      if(cCanon(merged)===cCanon(cloud)){
+        cloudBase=JSON.parse(JSON.stringify(cloud)); cloudSaveDevice(); ok=true;
+      } else {
+        ok=await cloudPush(merged,doc.updateTime);
+      }
+    }
+    cloudStatus=ok?'ok':'conflicto';
+    if(ok) cloudLastSync=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){
+    cloudStatus='sin conexión';
+    ok=false;
+  }
+  cloudBusy=false;
+  if(ok) cloudRefreshUI();
+  if(cloudAgain){ cloudAgain=false; cloudSyncSoon(); }
+  return ok;
+}
+function cloudSyncSoon(){
+  if(!cloudActive()) return;
+  clearTimeout(cloudTimer);
+  cloudTimer=setTimeout(cloudSync,2500);
+}
+
+// --- acciones del panel de mamá ---
+async function cloudEnable(){
+  if(!cloudConfigured()){ alert('La nube todavía no está configurada en esta versión de Pipo.'); return; }
+  if(!confirm('¿Activar la nube con el progreso de ESTE dispositivo? Se crea un código para conectar otros dispositivos (por ejemplo la tablet de Salva).')) return;
+  cloudCode=cloudGenCode(); cloudBase=null;
+  try{
+    var ok=await cloudPush(currentState(),null);
+    if(!ok) throw new Error('conflicto');
+    cloudStatus='ok'; cloudLastSync=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    cloudSaveDevice();
+  }catch(e){
+    cloudCode=''; cloudBase=null; cloudSaveDevice();
+    alert('No pude conectar con la nube ('+e.message+'). Revisá la conexión a internet y que las reglas de Firebase estén publicadas.');
+  }
+  renderAdmin();
+}
+async function cloudConnectPrompt(){
+  if(!cloudConfigured()){ alert('La nube todavía no está configurada en esta versión de Pipo.'); return; }
+  var c=cloudNormalizeCode(prompt('Escribí el código de la nube (12 letras y números):')||'');
+  if(!c) return;
+  if(c.length!==12){ alert('El código tiene 12 caracteres. Revisalo y probá de nuevo.'); return; }
+  var prev=cloudCode; cloudCode=c;
+  try{
+    var r=await fetch(cloudUrl());
+    if(r.status===404){ cloudCode=prev; alert('No encontré ese código. Revisalo y probá de nuevo.'); renderAdmin(); return; }
+    if(!r.ok) throw new Error('GET '+r.status);
+    var doc=await r.json();
+    var cloud=JSON.parse(doc.fields.state.stringValue);
+    var local=currentState();
+    var hasLocal=(local.totalStars>0||Object.keys(local.completados||{}).length>0||(local.historial||[]).length>0);
+    var merged=cloud;
+    if(hasLocal && confirm('Este dispositivo ya tiene progreso propio. ¿Combinarlo con el de la nube?\n\nAceptar = combinar ambos\nCancelar = usar solo lo de la nube')){
+      merged=cMergeStates({},local,cloud);
+      merged.avatar=cloud.avatar||merged.avatar;
+    }
+    applyState(merged); saveLocal();
+    cloudBase=JSON.parse(JSON.stringify(cloud)); cloudSaveDevice();
+    await cloudSync();
+    cloudRefreshUI();
+    alert('✅ Dispositivo conectado a la nube.');
+  }catch(e){
+    cloudCode=prev; cloudSaveDevice();
+    alert('No pude conectar ('+e.message+'). Revisá el código y la conexión a internet.');
+  }
+  renderAdmin();
+}
+async function cloudSyncNow(){
+  var ok=await cloudSync();
+  renderAdmin();
+  pipoSay(ok?'☁️ Sincronizado':'No pude sincronizar ahora. Se reintenta solo.');
+}
+function cloudDisconnect(){
+  if(!confirm('¿Desconectar este dispositivo de la nube? El progreso de acá se queda en este dispositivo, pero deja de sincronizarse.')) return;
+  cloudCode=''; cloudBase=null; cloudStatus=''; cloudSaveDevice();
+  renderAdmin();
+}
+function cloudAdminHtml(){
+  var h='<div class="admin-wrap"><h3>☁️ Nube (usar Pipo en otros dispositivos)</h3>';
+  if(!cloudConfigured()){
+    return h+'<p style="font-size:.78rem;color:var(--gris);line-height:1.5">La nube todavía no está configurada en esta versión de Pipo.</p></div>';
+  }
+  if(!cloudCode){
+    return h+'<p style="font-size:.78rem;color:var(--gris);margin-bottom:.7rem;line-height:1.5">Guarda el progreso en internet para que Salva pueda seguir desde su tablet u otro navegador, y no se pierda si se borra el navegador.</p>'+
+      '<button class="btn-p" style="margin-bottom:.5rem" onclick="cloudEnable()">☁️ Activar la nube con el progreso de este dispositivo</button>'+
+      '<button class="btn-s" onclick="cloudConnectPrompt()">🔗 Conectar este dispositivo con un código</button></div>';
+  }
+  return h+'<p style="font-size:.78rem;color:var(--gris);margin-bottom:.4rem">Código de Salva (para conectar otros dispositivos):</p>'+
+    '<div style="font-size:1.25rem;font-weight:900;letter-spacing:.06em;color:var(--azul);background:var(--aclaro);border-radius:10px;padding:.7rem;text-align:center;margin-bottom:.6rem;user-select:all">'+cloudFormatCode(cloudCode)+'</div>'+
+    '<p style="font-size:.74rem;color:var(--gris);margin-bottom:.7rem;line-height:1.5">Estado: <b>'+(cloudStatus||'pendiente')+'</b>'+(cloudLastSync?' · última sincronización '+cloudLastSync:'')+'. Tratá el código como una contraseña: quien lo tenga puede ver y modificar el progreso.</p>'+
+    '<button class="btn-p" style="margin-bottom:.5rem" onclick="cloudSyncNow()">🔄 Sincronizar ahora</button>'+
+    '<button class="btn-s" onclick="cloudDisconnect()">Desconectar este dispositivo</button></div>';
+}
+// ===== NUBE (END) =====
+
+// ===== TEMPORIZADOR DE SESIÓN =====
+var sessSeconds=0, sessInterval=null;
+function fmtTime(sec){sec=Math.max(0,Math.round(sec));var m=Math.floor(sec/60),s2=sec%60;return (m<10?'0':'')+m+':'+(s2<10?'0':'')+s2;}
+function tickSession(){
+  sessSeconds++;
+  var el=document.getElementById('sess-time'); if(el) el.textContent=fmtTime(sessSeconds);
+  if(sessSeconds%30===0) saveState();
+}
+function startSessionTimer(){ if(sessInterval) return; sessInterval=setInterval(tickSession,1000); }
+function logSessionTime(){
+  if(sessSeconds<5){ sessSeconds=0; return; }
+  var today=new Date().toLocaleDateString('es-AR');
+  timeLog[today]=(timeLog[today]||0)+sessSeconds;
+  sessSeconds=0;
+  saveState();
+}
+window.addEventListener('beforeunload',function(){ logSessionTime(); });
+document.addEventListener('visibilitychange',function(){ if(document.hidden) logSessionTime(); });
+
+// ===== RACHA DIARIA =====
+function updateStreak(){
+  var today=new Date().toLocaleDateString('es-AR');
+  var y=new Date(); y.setDate(y.getDate()-1); var yest=y.toLocaleDateString('es-AR');
+  if(streak.last===today){ /* ya contado hoy */ }
+  else if(streak.last===yest){ streak.count=(streak.count||0)+1; streak.last=today; checkStreakBonus(); }
+  else { streak.count=1; streak.last=today; }
+  if(!streak.awarded) streak.awarded=[];
+  var el=document.getElementById('h-streak'); if(el) el.textContent=streak.count;
+  saveState();
+}
+function checkStreakBonus(){
+  var milestones={3:2,7:4,14:8,30:15};
+  if(milestones[streak.count] && streak.awarded.indexOf(streak.count)===-1){
+    streak.awarded.push(streak.count);
+    var bonus=milestones[streak.count];
+    addStars(bonus,'🔥 Racha de '+streak.count+' días');
+    setTimeout(function(){pipoSay('¡Racha de '+streak.count+' días! +'+bonus+' estrellas bonus 🔥');},700);
+  }
+}
+
+// ===== VOZ DE PIPO AL ARRANCAR =====
+var greetingStarted=false;
+function speakGreeting(){
+  var msg=(document.getElementById('greet-box')||{}).textContent||'';
+  var ico=document.getElementById('greet-speak-ico');
+  speakText('¡Hola Salva! Soy Pipo. '+msg,
+    function(){ greetingStarted=true; if(ico) ico.classList.add('speaking'); },
+    function(){ if(ico) ico.classList.remove('speaking'); }
+  );
+}
+
+// ===== ¿QUIÉN USA PIPO? (separa el tiempo/racha de Salva del de mamá) =====
+var mamaReviewMode=false;
+function showEntryGate(){
+  var g=document.getElementById('gate-modal'); if(g) g.classList.add('show');
+}
+function hideEntryGate(){
+  var g=document.getElementById('gate-modal'); if(g) g.classList.remove('show');
+}
+function enterAsSalva(){
+  hideEntryGate();
+  mamaReviewMode=false;
+  var b=document.getElementById('mama-badge'); if(b) b.style.display='none';
+  document.body.classList.remove('mama-mode');
+  updateStreak();
+  startSessionTimer();
+}
+function enterAsMama(){
+  hideEntryGate();
+  mamaReviewMode=true;
+  var b=document.getElementById('mama-badge'); if(b) b.style.display='block';
+  document.body.classList.add('mama-mode');
+}
+function pauseSessionTimer(){ if(sessInterval){ clearInterval(sessInterval); sessInterval=null; } }
+function resumeSessionTimer(){ if(!mamaReviewMode) startSessionTimer(); }
+
+// ===== INIT =====
+loadState();
+updateAvatarUI();
+var hh=new Date().getHours();
+var greets=hh<12?['¡Buenos días! ¿Empezamos antes del cole? ☀️','Mañana perfecta para ver una animación ⭐']:
+  hh<18?['¡Buenas tardes! ¿Trajiste tarea? Vamos 📚','¿Cómo estuvo el cole? Hacé un quiz y ganás ⭐']:
+  ['Un repaso rápido y listo para mañana 🌙','20 minutos de Pipo y a dormir. ¡Vamos! ⭐'];
+document.getElementById('greet-box').textContent=greets[Math.floor(Math.random()*greets.length)];
+buildCalendar();
+buildDatoWrap();
+updateStars();
+cloudLoadDevice();
+if(cloudActive()) cloudSync();
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden && cloudActive() && Date.now()-cloudLastAttempt>20000) cloudSync();
+});
+showEntryGate();
+function autoGreetOnce(){
+  document.removeEventListener('click',autoGreetOnce);
+  document.removeEventListener('touchstart',autoGreetOnce);
+  if(!greetingStarted && !mamaReviewMode) speakGreeting();
+}
+document.addEventListener('click',autoGreetOnce);
+document.addEventListener('touchstart',autoGreetOnce);
+// intento automático (funciona en algunos navegadores sin necesitar un toque primero)
+setTimeout(function(){ try{ if(!greetingStarted) speakGreeting(); }catch(e){} },900);
+</script>
+</body>
+</html>
