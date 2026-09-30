@@ -468,7 +468,7 @@ body.mama-mode{padding-top:2.1rem;}
       <button class="home-card hc4" onclick="openWallet()"><div class="hci">💰</div><h3>Mi billetera</h3><p>Estrellas · Plata · Dólares</p></button>
       <button class="home-card hc5" onclick="openAdmin()"><div class="hci">🔐</div><h3>Panel de mamá</h3><p>Seguimiento y control</p></button>
       <button class="home-card hc6" onclick="openAvatar()"><div class="hci" id="home-av-ico">🎮</div><h3>Mi personaje</h3><p>Personalizá tu avatar</p></button>
-      <button class="home-card hc-bonus" onclick="startBridgeQuiz()"><div class="hci">🌉</div><h3>Bonus: Puente de Materias</h3><p>Preguntas que conectan todo lo que aprendiste — como en el cole</p></button>
+      <button class="home-card hc-bonus" onclick="openBridgeMenu()"><div class="hci">🌉</div><h3>Bonus: Puente de Materias</h3><p>Preguntas que conectan todo lo que aprendiste — como en el cole</p></button>
     </div>
   </div>
 </div>
@@ -1014,7 +1014,7 @@ function buildQuiz(){
       '<div class="ptip"><div class="pe">🦉</div><p>Las estrellas de este tema ya fueron acreditadas. <b>No se puede repetir para ganar más.</b> Pero podés repasarlo todas las veces que quieras antes del examen.</p></div>'+
       '<button class="btn-p" onclick="startRepasoQuiz()">🔁 Repasar este tema'+(vecesRepaso>0?' (ya repasado '+vecesRepaso+' vez/veces)':'')+'</button>'+
       (isBonus?'':'<button class="btn-s" onclick="switchTab(\'anim\')">📖 Repasar el contenido</button>')+
-      '<button class="btn-s" onclick="'+(isBonus?'goHome()':"showScreen('s-temas')")+'">← Volver'+(isBonus?' al inicio':' a temas')+'</button>';
+      '<button class="btn-s" onclick="'+(isBonus?'openBridgeMenu()':"showScreen('s-temas')")+'">← Volver'+(isBonus?' a las rondas':' a temas')+'</button>';
     return;
   }
   quizSource=currentTema.quiz;
@@ -1242,7 +1242,7 @@ function showRes(cont){
     ?'<div class="earn-box"><div class="es">⭐</div><div class="en">+'+earned+' estrellas</div><p>= $'+pesos.toLocaleString('es-AR')+' para tu billetera</p><small>≈ u$s '+dl+'</small></div>'
     :'<div class="no-earn"><p>📚 Ganás ⭐1 por intentarlo.<br>'+(isBonus?'Podés volver a intentarlo repasando.':'Estudiá el tema — el quiz no se puede repetir. Podés volver después a repasarlo sin límite.')+'</p></div>';
   var navBtns=isBonus
-    ?'<button class="btn-s" onclick="goHome()">🏠 Volver al inicio</button>'
+    ?'<button class="btn-s" onclick="openBridgeMenu()">🌉 Ver otras rondas</button><button class="btn-s" onclick="goHome()">🏠 Inicio</button>'
     :'<button class="btn-s" onclick="switchTab(\'anim\')">📖 Repasar el contenido</button><button class="btn-s" onclick="showScreen(\'s-temas\')">← Volver a temas</button>';
   cont.innerHTML='<div class="res"><div class="rico">'+emoji+'</div><h2>'+phrase+
     '</h2><div class="rsc">'+qScore+'<small> / '+tot+'</small></div>'+earnHtml+writeNote+
@@ -1311,21 +1311,48 @@ function buildExamModeBanner(){
   if(!urgent){ wrap.innerHTML=''; return; }
   wrap.innerHTML='<button class="exmode-banner" onclick="startExamMode(\''+urgent.mat+'\')"><div class="ee">⏱️</div><div><b>¡Modo Examen! '+urgent.mat+' es en '+urgentDias+' día(s)</b><span>Tocá para hacer un simulacro cronometrado</span></div></button>';
 }
-var BRIDGE_QUIZ=[
-  {q:'In English, how do you say "ciclo del agua"?',o:['Water cycle','Water round','Cycle of water drop','Aqua cycle'],ok:0},
-  {type:'num',q:'Si el 97% del agua de la Tierra es salada, ¿qué porcentaje es agua dulce? (solo el número)',ok:3},
-  {q:'El EMOS potabiliza el agua para que llegue limpia a las casas. ¿Por qué es un tema importante para el FUTURO, no solo para hoy?',o:['Porque el agua dulce es limitada y hay que cuidarla para que alcance después','Porque el agua nunca se puede reciclar','Porque solo importa en verano','Porque el agua salada es más importante que la dulce'],ok:0},
-  {type:'num',q:'Un pueblo gasta $2.000 por mes cuidando el agua limpia. Si ahorran agua y bajan el gasto a $1.500, ¿cuánto ahorraron? (solo el número)',ok:500},
-  {q:'Complete: "Precipitation is when water falls as ___."',o:['rain, snow or hail','only rain','only snow','vapour'],ok:0},
-  {q:'El "Congreso de Tucumán" (1816) es cuando Argentina declaró su...',o:['Independencia','Constitución','Primer presidente','Primera guerra'],ok:0},
-  {q:'Si quisieras describir el Congreso de Tucumán como "la cuna de la libertad", ¿qué recurso literario estás usando?',o:['Metáfora','Rima','Sustantivo propio','Adjetivo posesivo'],ok:0}
+var BRIDGE_RONDAS=[
+  {id:'agua',titulo:'🌊 Agua para el futuro',sub:'Naturales + Sociales + Inglés + Matemática',stars:4,quiz:[
+    {q:'In English, how do you say "ciclo del agua"?',o:['Water cycle','Water round','Cycle of water drop','Aqua cycle'],ok:0},
+    {type:'num',q:'Si el 97% del agua de la Tierra es salada, ¿qué porcentaje es agua dulce? (solo el número)',ok:3},
+    {q:'El EMOS potabiliza el agua para que llegue limpia a las casas. ¿Por qué es un tema importante para el FUTURO, no solo para hoy?',o:['Porque el agua dulce es limitada y hay que cuidarla para que alcance después','Porque el agua nunca se puede reciclar','Porque solo importa en verano','Porque el agua salada es más importante que la dulce'],ok:0},
+    {type:'num',q:'Un pueblo gasta $2.000 por mes cuidando el agua limpia. Si ahorran agua y bajan el gasto a $1.500, ¿cuánto ahorraron? (solo el número)',ok:500},
+    {q:'Complete: "Precipitation is when water falls as ___."',o:['rain, snow or hail','only rain','only snow','vapour'],ok:0},
+    {q:'El "Congreso de Tucumán" (1816) es cuando Argentina declaró su...',o:['Independencia','Constitución','Primer presidente','Primera guerra'],ok:0},
+    {q:'Si quisieras describir el Congreso de Tucumán como "la cuna de la libertad", ¿qué recurso literario estás usando?',o:['Metáfora','Rima','Sustantivo propio','Adjetivo posesivo'],ok:0}
+  ]},
+  {id:'ronda2',titulo:'🔗 Fracciones, círculo, suelo y ahorro',sub:'Matemática + Naturales + Finanzas + Inglés + Lengua',stars:4,quiz:[
+    {type:'num',q:'Si ahorrás 1/4 de $2.000 cada semana, ¿cuántos pesos ahorrás por semana? (solo el número)',ok:500},
+    {q:'Estás escribiendo un artículo de revista sobre pizzas. ¿Cuál es el mejor "gancho" (hook) para empezar, usando lo que sabés de círculos?',o:['Did you know a pizza is a perfect circle made of 8 equal slices?','Pizza is food.','I like pizza a lot.','Pizza has cheese.'],ok:0},
+    {q:'Si hicieras un caligrama sobre el sol, ¿qué forma tendrían que dibujar las palabras?',o:['Una forma redonda, como un círculo','Una línea recta','Un cuadrado','No importa la forma'],ok:0},
+    {q:'El suelo con humus retiene "ni mucha ni poca" agua — la cantidad justa. ¿Qué otra idea de las que aprendiste se parece a eso?',o:['Un buen presupuesto: no gastar todo, pero tampoco guardar tanto que no disfrutes nada','Comer solo una vez por semana','Nunca ahorrar nada','Gastar toda la plata apenas la tenés'],ok:0},
+    {type:'num',q:'Si dividís una pizza redonda en 8 porciones iguales y comés 3, ¿qué fracción comiste? Escribí solo el numerador (el número de arriba).',ok:3},
+    {q:'¿Cuál oración compara bien dos formas de ahorrar, usando un conector en inglés?',o:['Both saving at home and at the bank keep your money safe, but the bank can also add interest.','Money is good.','I like saving.','Banks have doors.'],ok:0},
+    {q:'Un suelo arcilloso deja que el agua se encharque en vez de filtrarse. ¿Por qué eso puede ser un problema para "Agua para el futuro"?',o:['Porque esa agua se puede desperdiciar o contaminar más fácil, en vez de aprovecharse bien','Porque el agua se vuelve dulce','Porque hace que llueva más','No es un problema en absoluto'],ok:0}
+  ]}
 ];
-function startBridgeQuiz(){
-  currentMat='bonus'; currentTemaIdx='bridge';
-  currentTema={titulo:'🌉 Puente de Materias',stars:4,quiz:BRIDGE_QUIZ};
-  currentTemaTitle=currentTema.titulo;
+function openBridgeMenu(){
   document.getElementById('con-title').textContent='🌉 Puente de Materias';
-  document.getElementById('con-body').innerHTML='<div class="ptip"><div class="pe">🦉</div><p>Estas preguntas conectan varias materias a la vez — Naturales, Sociales, Inglés, Matemática y Finanzas — igual que cuando en el cole todo gira en torno al proyecto <b>"Agua para el futuro"</b>. ¡Es un bonus!</p></div><div id="tc-quiz"></div>';
+  var html='<div class="ptip"><div class="pe">🦉</div><p>Cada ronda conecta varias materias entre sí — es 100% bonus, para repasar todo junto casi sin darte cuenta. Cuando sumemos temas nuevos, van a aparecer rondas nuevas acá.</p></div>';
+  BRIDGE_RONDAS.forEach(function(r,i){
+    var key='bonus_'+r.id, done=completados[key];
+    html+='<button class="tema-item'+(done?' done':'')+'" onclick="startBridgeQuiz(\''+r.id+'\')">'+
+      '<div class="tn'+(done?' ok':'')+'">'+(done?'✓':(i+1))+'</div>'+
+      '<div class="ti"><h3>'+r.titulo+'</h3><p>'+r.sub+'</p></div>'+
+      (done?'<div class="te ok">✓ '+done.score+'/'+done.total+'</div>':'<div class="te">⭐'+r.stars+'</div>')+
+      '</button>';
+  });
+  document.getElementById('con-body').innerHTML=html;
+  showScreen('s-con');
+}
+function startBridgeQuiz(rondaId){
+  var ronda=BRIDGE_RONDAS.filter(function(r){return r.id===rondaId;})[0];
+  if(!ronda) return;
+  currentMat='bonus'; currentTemaIdx=rondaId;
+  currentTema={titulo:ronda.titulo,stars:ronda.stars,quiz:ronda.quiz};
+  currentTemaTitle=currentTema.titulo;
+  document.getElementById('con-title').textContent=ronda.titulo;
+  document.getElementById('con-body').innerHTML='<div class="ptip"><div class="pe">🦉</div><p>Estas preguntas conectan varias materias a la vez: '+ronda.sub+'. ¡Es un bonus!</p></div><div id="tc-quiz"></div>';
   showScreen('s-con');
   buildQuiz();
 }
