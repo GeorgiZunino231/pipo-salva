@@ -90,6 +90,10 @@ body.mama-mode{padding-top:2.1rem;}
 .dato-label{font-size:.72rem;font-weight:900;color:#4338CA;letter-spacing:.03em;margin-bottom:.45rem;}
 .dato-fact{font-size:.86rem;color:#1E293B;font-weight:600;line-height:1.5;margin-bottom:.75rem;}
 .dato-prompt{font-size:.84rem;font-weight:800;color:#4338CA;margin-bottom:.55rem;line-height:1.4;}
+.pron-card{background:white;border-radius:13px;padding:1rem;margin-bottom:.9rem;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.pron-target{font-size:1.02rem;font-weight:800;color:var(--azul);margin-bottom:.2rem;}
+.pron-es{font-size:.76rem;color:var(--gris);margin-bottom:.7rem;}
+.pron-rec-btn.listening{background:#991B1B;animation:examPulse 1s infinite;}
 .mode-txt h2{font-size:.97rem;font-weight:800;color:var(--azul);margin:0;}
 .mode-txt p{font-size:.75rem;color:var(--gris);margin:2px 0 0;font-weight:600;}
 .mode-arr{margin-left:auto;color:var(--gris);font-size:1.1rem;}
@@ -536,11 +540,12 @@ var totalStars=0, historial=[], completados={}, adminLog=[];
 var timeLog={}, pendingWritten=[], qWriteCount=0, desempenoLog=[], qEmptyWarned=false;
 var quizSource=[], repasoMode=false, repasoLog={};
 var datoLog={}, datoEmptyWarned=false;
+var pronLog={};
 var lastBackup='', epoch=0;
 var streak={count:0,last:'',awarded:[]};
 var screenStack=['s-home'];
 var currentMode='ver', currentMat='', currentTemaIdx=0, currentTema=null, currentTemaTitle='';
-var qIdx=0, qScore=0, qAnswered=false, slideIdx=0;
+var qIdx=0, qScore=0, qAnswered=false, slideIdx=0, viewIdx=0, qAnswers=[];
 var wqIdx=0, wqAnswered=false;
 var avatar={skin:'#C68642',hair:'#1a1a1a',shirt:'#CC0000',pants:'#1a3a6b',shoes:'#111',acc:'⚽',bg:'river'};
 
@@ -616,11 +621,13 @@ function openTema(mat,idx){
 // ===== CONTENIDO =====
 function buildContenido(){
   var t=currentTema, hasJ=t.juegos&&t.juegos.length>0, hasM=t.mathVisual, hasV=t.videos&&t.videos.length>0;
+  var hasP=currentMat==='ingles' && t.pronunciacion && t.pronunciacion.length>0;
   var tabs='<div class="tabs">' +
     '<button class="tab on" id="tab-anim" onclick="switchTab(\'anim\')">✨ Animación</button>' +
     '<button class="tab" id="tab-info" onclick="switchTab(\'info\')">🗺️ Info</button>' +
     (hasM?'<button class="tab" id="tab-math" onclick="switchTab(\'math\')">📐 Visual</button>':'')+
     (hasV?'<button class="tab" id="tab-vids" onclick="switchTab(\'vids\')">▶️ Videos</button>':'')+
+    (hasP?'<button class="tab" id="tab-pron" onclick="switchTab(\'pron\')">🗣️ Hablar</button>':'')+
     (hasJ?'<button class="tab" id="tab-juegos" onclick="switchTab(\'juegos\')">🎮 Juegos</button>':'')+
     '<button class="tab" id="tab-quiz" onclick="switchTab(\'quiz\')">✏️ Quiz</button>' +
     '</div>';
@@ -629,11 +636,13 @@ function buildContenido(){
     '<div id="tc-info" class="tab-content">'+buildInfo()+'</div>'+
     (hasM?'<div id="tc-math" class="tab-content">'+buildMathVisual()+'</div>':'')+
     (hasV?'<div id="tc-vids" class="tab-content">'+buildVideos()+'</div>':'')+
+    (hasP?'<div id="tc-pron" class="tab-content">'+buildPronunciacion()+'</div>':'')+
     (hasJ?'<div id="tc-juegos" class="tab-content">'+buildJuegos()+'</div>':'')+
     '<div id="tc-quiz" class="tab-content"></div>';
 }
 function switchTab(name){
   stopSpeech();
+  stopRecording();
   document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on');});
   document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('on');});
   var tel=document.getElementById('tab-'+name); if(tel) tel.classList.add('on');
@@ -736,25 +745,28 @@ if(window.speechSynthesis){
   loadVoices();
   window.speechSynthesis.onvoiceschanged=loadVoices;
 }
-function pickSpanishVoice(){
+function pickVoiceForLang(lang){
   if(!ttsVoices||ttsVoices.length===0) loadVoices();
   if(!ttsVoices||ttsVoices.length===0) return null;
-  var esVoices=ttsVoices.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf('es')===0;});
-  if(esVoices.length===0) return null;
-  var maleHints=['male','hombre','jorge','diego','carlos','pablo','javier','miguel','fernando','andrés','andres','juan','varón','varon'];
-  var male=esVoices.filter(function(v){var n=v.name.toLowerCase();return maleHints.some(function(h){return n.indexOf(h)>-1;});})[0];
+  var prefix=(lang||'es').slice(0,2).toLowerCase();
+  var langVoices=ttsVoices.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf(prefix)===0;});
+  if(langVoices.length===0) return null;
+  var maleHints=['male','hombre','jorge','diego','carlos','pablo','javier','miguel','fernando','andrés','andres','juan','varón','varon','daniel','david','mark','tom'];
+  var male=langVoices.filter(function(v){var n=v.name.toLowerCase();return maleHints.some(function(h){return n.indexOf(h)>-1;});})[0];
   if(male) return male;
-  var ar=esVoices.filter(function(v){return v.lang==='es-AR';})[0];
-  if(ar) return ar;
-  return esVoices[0];
+  var exact=langVoices.filter(function(v){return v.lang.toLowerCase()===lang.toLowerCase();})[0];
+  if(exact) return exact;
+  return langVoices[0];
 }
+function pickSpanishVoice(){ return pickVoiceForLang('es'); }
 function stripForSpeech(text){
   if(!text) return '';
   try{
     return text.replace(/[\u{1F1E6}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{2300}-\u{23FF}]/gu,'').replace(/\s{2,}/g,' ').trim();
   }catch(e){ return text; }
 }
-function speakText(text,onStart,onEnd){
+function speakText(text,onStart,onEnd,lang){
+  lang=lang||'es-AR';
   if(!window.speechSynthesis){
     pipoSay('Este navegador no tiene voz disponible. Probá con Chrome actualizado.');
     if(onEnd) onEnd();
@@ -765,9 +777,9 @@ function speakText(text,onStart,onEnd){
     window.speechSynthesis.cancel();
     if(window.speechSynthesis.paused) window.speechSynthesis.resume();
     var u=new SpeechSynthesisUtterance(text);
-    var v=pickSpanishVoice();
+    var v=pickVoiceForLang(lang);
     if(v) u.voice=v;
-    u.lang='es-AR'; u.rate=0.92; u.pitch=0.8;
+    u.lang=lang; u.rate=0.92; u.pitch=0.8;
     if(onStart) u.onstart=onStart;
     var ended=false;
     var doEnd=function(){ if(ended) return; ended=true; if(onEnd) onEnd(); };
@@ -790,9 +802,11 @@ function toggleSpeak(){
 function startSpeech(){
   stopSpeech();
   var btn=document.getElementById('speak-btn'), lbl=document.getElementById('speak-lbl');
+  var lang=currentMat==='ingles'?'en-US':'es-AR';
   speakText(buildSpeechText(),
     function(){ if(btn)btn.classList.add('speaking'); if(lbl)lbl.textContent='Tocá para pausar'; },
-    function(){ if(btn)btn.classList.remove('speaking'); if(lbl)lbl.textContent='Escuchar este tema'; }
+    function(){ if(btn)btn.classList.remove('speaking'); if(lbl)lbl.textContent='Escuchar este tema'; },
+    lang
   );
 }
 function stopSpeech(){
@@ -862,6 +876,101 @@ function buildJuegos(){
 }
 function playGame(url){addStars(1,'Juego: '+currentTemaTitle);window.open(url,'_blank');}
 
+// ===== PRONUNCIACIÓN (escuchar + grabar + comparar) =====
+var SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;
+var pronRecording=false, pronActiveRec=null;
+function canRecord(){ return !!SpeechRec; }
+function normPron(s){ return (s||'').toLowerCase().replace(/[^a-z0-9\s]/g,'').trim(); }
+function wordMatchRatio(target,heard){
+  var wa=normPron(target).split(/\s+/).filter(Boolean);
+  var wb=normPron(heard).split(/\s+/).filter(Boolean);
+  if(wa.length===0) return 0;
+  var pool=wb.slice(), matched=0;
+  wa.forEach(function(w){ var i=pool.indexOf(w); if(i>-1){ matched++; pool.splice(i,1); } });
+  return matched/wa.length;
+}
+function buildPronunciacion(){
+  var t=currentTema;
+  var h='<div class="ptip"><div class="pe">🦉</div><p>Escuchá cada frase y después tocá el micrófono para decirla en voz alta. <b>No mide tu acento perfecto</b> — mide si se entendieron las palabras, así podés practicar sin miedo a equivocarte.</p></div>';
+  if(!canRecord()) h+='<div class="qwrite-pend" style="background:#FEF3C7;color:#92400E">🎤 Este navegador no permite grabar voz — igual podés escuchar y practicar en voz alta vos solo/a.</div>';
+  t.pronunciacion.forEach(function(p,i){
+    var key=currentMat+'_'+currentTemaIdx+'_'+i;
+    var done=pronLog[key];
+    h+='<div class="pron-card">'+
+      '<p class="pron-target">"'+p.frase+'"</p>'+
+      (p.es?'<p class="pron-es">'+p.es+'</p>':'')+
+      '<div style="display:flex;gap:.5rem;flex-wrap:wrap">'+
+      '<button class="btn-s" style="margin:0;width:auto;flex:1;min-width:120px" onclick="speakText(\''+p.frase.replace(/'/g,"\\'")+'\',null,null,\'en-US\')">🔊 Escuchar</button>'+
+      '<button class="btn-p pron-rec-btn" style="margin:0;width:auto;flex:1;min-width:120px" id="pron-rec-'+i+'" onclick="startRecording('+i+')"'+(canRecord()?'':' disabled')+'>🎤 Grabar mi voz</button>'+
+      '</div>'+
+      (done?'<div class="qwrite-pend" style="background:#DCFCE7;color:#166534;margin-top:.6rem">✅ Ya practicaste esta — ganaste ⭐1 por intentarlo</div>':'')+
+      '<div id="pron-res-'+i+'" style="margin-top:.6rem"></div>'+
+      '</div>';
+  });
+  return h;
+}
+function stopRecording(){
+  if(pronActiveRec){ try{ pronActiveRec.abort(); }catch(e){} pronActiveRec=null; }
+  pronRecording=false;
+}
+function startRecording(idx){
+  if(pronRecording) return;
+  if(!canRecord()){ pipoSay('Este navegador no permite grabar voz. Probá desde Chrome.'); return; }
+  var t=currentTema.pronunciacion[idx];
+  var btn=document.getElementById('pron-rec-'+idx);
+  var res=document.getElementById('pron-res-'+idx);
+  try{
+    var rec=new SpeechRec();
+    pronActiveRec=rec;
+    rec.lang='en-US'; rec.interimResults=false; rec.maxAlternatives=1;
+    pronRecording=true;
+    if(btn){ btn.textContent='🎙️ Escuchando...'; btn.disabled=true; btn.classList.add('listening'); }
+    if(res) res.innerHTML='';
+    rec.onresult=function(ev){
+      var transcript=ev.results[0][0].transcript;
+      var ratio=wordMatchRatio(t.frase,transcript);
+      handlePronResult(idx,transcript,ratio);
+    };
+    rec.onerror=function(ev){
+      pronRecording=false; pronActiveRec=null;
+      if(btn){ btn.textContent='🎤 Grabar mi voz'; btn.disabled=false; btn.classList.remove('listening'); }
+      var msg=ev.error==='not-allowed'?'No pude usar el micrófono — revisá los permisos del navegador para este sitio.':'No pude escucharte bien, probá de nuevo.';
+      if(res) res.innerHTML='<div class="qwrite-pend" style="background:#FEE2E2;color:#991B1B">⚠️ '+msg+'</div>';
+    };
+    rec.onend=function(){
+      pronRecording=false; pronActiveRec=null;
+      if(btn){ btn.textContent='🎤 Grabar mi voz'; btn.disabled=false; btn.classList.remove('listening'); }
+    };
+    rec.start();
+  }catch(e){
+    pronRecording=false; pronActiveRec=null;
+    pipoSay('No pude activar el micrófono en este dispositivo.');
+  }
+}
+function handlePronResult(idx,transcript,ratio){
+  var res=document.getElementById('pron-res-'+idx); if(!res) return;
+  var level=ratio>=0.8?'ok':ratio>=0.5?'camino':'mal';
+  var msg=ratio>=0.8?'🎉 ¡Sonó muy parecido!':ratio>=0.5?'💪 Bastante bien — escuchá de nuevo e intentá otra vez para afinarlo.':'🔁 Escuchá la frase de nuevo y probá otra vez.';
+  var bg=level==='ok'?'#DCFCE7':level==='camino'?'#FEF3C7':'#FEE2E2';
+  var col=level==='ok'?'#166534':level==='camino'?'#92400E':'#991B1B';
+  res.innerHTML='<div class="qwrite-pend" style="background:'+bg+';color:'+col+'">'+msg+'<br><span style="font-size:.72rem;opacity:.85">Lo que entendí: "'+transcript+'"</span></div>';
+  var key=currentMat+'_'+currentTemaIdx+'_'+idx;
+  if(!pronLog[key]){
+    pronLog[key]={fecha:new Date().toLocaleDateString('es-AR')};
+    addStars(1,'🗣️ Pronunciación: '+currentTemaTitle);
+    saveState();
+    buildPronunciacionRefresh();
+  }
+}
+function buildPronunciacionRefresh(){
+  var cel=document.getElementById('tc-pron');
+  if(cel && cel.classList.contains('on')){
+    var scrollY=window.scrollY;
+    cel.innerHTML=buildPronunciacion();
+    window.scrollTo(0,scrollY);
+  }
+}
+
 // ===== QUIZ =====
 function findPendingWritten(materia,tema,pregunta){
   for(var i=0;i<pendingWritten.length;i++){
@@ -909,7 +1018,7 @@ function buildQuiz(){
     return;
   }
   quizSource=currentTema.quiz;
-  qIdx=0; qScore=0; qAnswered=false; qWriteCount=0; qEmptyWarned=false; renderPregunta(cont);
+  qIdx=0; qScore=0; qAnswered=false; qWriteCount=0; qEmptyWarned=false; qAnswers=[]; renderPregunta(cont);
 }
 function openWriteEdit(pregunta){
   var q=null;
@@ -942,9 +1051,16 @@ function submitWriteEdit(pregunta){
   buildQuiz();
 }
 function showWriteHint(isEdit){
-  var q=isEdit?window._editHintQ:currentTema.quiz[qIdx];
+  var q=isEdit?window._editHintQ:quizSource[qIdx];
   var box=document.getElementById('qhintbox'); if(!box||!q) return;
-  box.innerHTML='<div class="qrubric" style="background:#FEF9C3">💡 Para empezar, podés escribir algo así:<br><i>'+(q.starter?q.starter.replace(/\n/g,'<br>'):'Contá con tus palabras lo que entendiste del tema. ¡No hace falta que sea perfecto!')+'</i></div>';
+  box.innerHTML='<div class="qrubric" style="background:#FEF9C3">💭 '+(q.hint1||'Pensá en tus propias palabras. ¿Qué es lo primero que se te ocurre sobre el tema?')+'</div>'+
+    '<button class="btn-s" style="margin-bottom:.5rem" onclick="showWriteHintExample('+isEdit+')">🔍 Todavía no se me ocurre, mostrame un ejemplo</button>';
+}
+function showWriteHintExample(isEdit){
+  var q=isEdit?window._editHintQ:quizSource[qIdx];
+  var box=document.getElementById('qhintbox'); if(!box||!q) return;
+  box.innerHTML='<div class="qrubric" style="background:#FEF9C3">💭 '+(q.hint1||'')+'</div>'+
+    '<div class="qrubric" style="background:#FDE68A">💡 Para empezar, podés escribir algo así:<br><i>'+(q.starter?q.starter.replace(/\n/g,'<br>'):'Contá con tus propias palabras lo que entendiste del tema.')+'</i></div>';
 }
 function pickPhrase(arr){return arr[Math.floor(Math.random()*arr.length)];}
 var PIPO_CORRECT=['🎉 ¡Gol de Pipo! Correcto.','⛏️ ¡Crafteaste la respuesta perfecta!','🏆 ¡Como River en la Libertadores! Correcto.','💎 ¡Encontraste el diamante! Respuesta correcta.','🔥 ¡Imparable! Correcto.','⚽ ¡La metiste en el ángulo! Correcto.'];
@@ -952,27 +1068,56 @@ var PIPO_INCORRECT_PREFIX=['🧱 Casi, pero no. Era: ','😅 Le pegaste al palo.
 var PIPO_RES_HIGH=['¡Golazo, Salva! ⚽🔴','¡Sos un crack, como Millonarios en cancha! 🏆','¡Diamante nivel PRO! ⛏️💎','¡Excelente, Salva!'];
 var PIPO_RES_MED=['¡Bien jugado! Podés mejorar 💪','Vas por buen camino, como armando una base en Minecraft 🧱','¡Casi imbatible! Seguí así 🥈'];
 var PIPO_RES_LOW=['Seguí practicando, todo crack empezó así 🌱','En Minecraft también hay que intentar varias veces ⛏️','Repasá la animación y volvés más fuerte 📚'];
-function renderPregunta(cont){
-  var q=quizSource[qIdx], tot=quizSource.length, type=q.type||'mc';
+function renderPregunta(cont, idx){
+  if(idx===undefined) idx=qIdx;
+  viewIdx=idx;
+  var q=quizSource[idx], tot=quizSource.length, type=q.type||'mc';
+  var reviewing=!!qAnswers[idx];
+  var qAudio=currentMat==='ingles'?'<button class="btn-s" style="width:auto;padding:.35rem .7rem;margin:0 0 .5rem;font-size:.78rem" onclick="speakText(quizSource['+idx+'].q,null,null,\'en-US\')">🔊 Escuchar en inglés</button>':'';
   var html='<div class="quiz-wrap">'+
-    '<div class="quiz-top"><span>'+(repasoMode?'🔁 ':'')+(qIdx+1)+'/'+tot+'</span><div class="qpbar"><div class="qpfill" style="width:'+Math.round(qIdx/tot*100)+'%"></div></div><span>'+(repasoMode?'✅ '+qScore:'⭐ '+qScore)+'</span></div>'+
-    '<div class="quiz-q">'+q.q+'</div>';
-  if(type==='mc'){
-    html+='<div class="quiz-opts">';
-    q.o.forEach(function(o,i){html+='<button class="qopt" id="qo'+i+'" onclick="checkA('+i+','+q.ok+')">'+o+'</button>';});
-    html+='</div>';
-  } else if(type==='num'){
-    html+='<input type="number" inputmode="decimal" class="qnum-inp" id="qnuminp" placeholder="Tu respuesta">'+
-      '<button class="btn-p" id="qnumbtn" onclick="checkNum()">Verificar ✓</button>';
-  } else if(type==='write'){
-    qEmptyWarned=false;
-    html+=buildRubricChecklist(q.rubric)+
-      '<button class="btn-s" onclick="showWriteHint(false)" style="margin-bottom:.5rem">🆘 Necesito una ayudita</button>'+
-      '<div id="qhintbox"></div>'+
-      '<textarea class="qwrite-area" id="qwritearea" placeholder="Escribí tu respuesta acá..."></textarea>'+
-      '<button class="btn-p" id="qwritebtn" onclick="checkWrite()">Entregar ✓</button>';
+    '<div class="quiz-top"><span>'+(reviewing?'👀 ':(repasoMode?'🔁 ':''))+(idx+1)+'/'+tot+'</span><div class="qpbar"><div class="qpfill" style="width:'+Math.round(qIdx/tot*100)+'%"></div></div><span>'+(repasoMode?'✅ '+qScore:'⭐ '+qScore)+'</span></div>'+
+    '<div class="quiz-q">'+q.q+'</div>'+qAudio;
+
+  if(reviewing){
+    var rec=qAnswers[idx];
+    if(type==='mc'){
+      html+='<div class="quiz-opts">';
+      q.o.forEach(function(o,i){
+        var cls='qopt';
+        if(i===q.ok) cls+=' ok'; else if(i===rec.selected) cls+=' mal';
+        html+='<button class="'+cls+'" disabled>'+o+'</button>';
+      });
+      html+='</div>';
+    } else if(type==='num'){
+      html+='<input type="number" class="qnum-inp" value="'+(rec.value!==undefined&&rec.value!==null?rec.value:'')+'" disabled>';
+    } else if(type==='write'){
+      html+='<div class="qwrite-pend" style="background:#E0F2FE;color:#075985">👀 Estás revisando — esto ya lo entregaste, no se puede editar desde acá.</div>'+
+        '<textarea class="qwrite-area" disabled>'+(rec.text||'')+'</textarea>';
+    }
+    html+='<div class="qfb on '+(rec.ok===false?'mal':'ok')+'">'+(rec.feedback||'')+'</div>';
+  } else {
+    if(type==='mc'){
+      html+='<div class="quiz-opts">';
+      q.o.forEach(function(o,i){html+='<button class="qopt" id="qo'+i+'" onclick="checkA('+i+','+q.ok+')">'+o+'</button>';});
+      html+='</div>';
+    } else if(type==='num'){
+      html+='<input type="number" inputmode="decimal" class="qnum-inp" id="qnuminp" placeholder="Tu respuesta">'+
+        '<button class="btn-p" id="qnumbtn" onclick="checkNum()">Verificar ✓</button>';
+    } else if(type==='write'){
+      qEmptyWarned=false;
+      html+=buildRubricChecklist(q.rubric)+
+        '<button class="btn-s" onclick="showWriteHint(false)" style="margin-bottom:.5rem">🆘 Necesito una ayudita</button>'+
+        '<div id="qhintbox"></div>'+
+        '<textarea class="qwrite-area" id="qwritearea" placeholder="Escribí tu respuesta acá..."></textarea>'+
+        '<button class="btn-p" id="qwritebtn" onclick="checkWrite()">Entregar ✓</button>';
+    }
+    html+='<div class="qfb" id="qfb"></div>';
   }
-  html+='<div class="qfb" id="qfb"></div><button class="qnext" id="qnext" onclick="nextP()">Siguiente →</button></div>';
+
+  html+='<div style="display:flex;gap:.5rem;margin-top:.6rem">'+
+    (idx>0?'<button class="btn-s" style="margin:0;width:auto;flex:0 0 auto;padding:.72rem 1rem" onclick="prevP()">← Anterior</button>':'')+
+    '<button class="qnext'+(reviewing?' on':'')+'" id="qnext" style="margin:0;flex:1" onclick="nextP()">Siguiente →</button>'+
+    '</div></div>';
   cont.innerHTML=html;
 }
 function checkA(idx,correct){
@@ -980,9 +1125,11 @@ function checkA(idx,correct){
   for(var i=0;i<quizSource[qIdx].o.length;i++){var b=document.getElementById('qo'+i);if(b)b.disabled=true;}
   document.getElementById('qo'+correct).classList.add('ok');
   var fb=document.getElementById('qfb'), nxt=document.getElementById('qnext');
-  if(idx===correct){qScore++;document.getElementById('qo'+idx).classList.add('ok');fb.textContent=pickPhrase(PIPO_CORRECT);fb.className='qfb on ok';}
-  else{document.getElementById('qo'+idx).classList.add('mal');fb.textContent=pickPhrase(PIPO_INCORRECT_PREFIX)+'"'+quizSource[qIdx].o[correct]+'".';fb.className='qfb on mal';}
+  var feedback, ok=(idx===correct);
+  if(ok){qScore++;document.getElementById('qo'+idx).classList.add('ok');feedback=pickPhrase(PIPO_CORRECT);fb.textContent=feedback;fb.className='qfb on ok';}
+  else{document.getElementById('qo'+idx).classList.add('mal');feedback=pickPhrase(PIPO_INCORRECT_PREFIX)+'"'+quizSource[qIdx].o[correct]+'".';fb.textContent=feedback;fb.className='qfb on mal';}
   nxt.className='qnext on';
+  qAnswers[qIdx]={selected:idx,feedback:feedback,ok:ok};
 }
 function checkNum(){
   if(qAnswered) return; qAnswered=true;
@@ -993,9 +1140,12 @@ function checkNum(){
   var ok=!isNaN(val)&&Math.abs(val-q.ok)<=tol;
   inp.disabled=true; var bt=document.getElementById('qnumbtn'); if(bt) bt.disabled=true;
   var fb=document.getElementById('qfb'), nxt=document.getElementById('qnext');
-  if(ok){qScore++;fb.textContent=pickPhrase(PIPO_CORRECT)+' La respuesta era '+q.ok+'.';fb.className='qfb on ok';}
-  else{fb.textContent='❌ La respuesta correcta era '+q.ok+'. Revisá el tema.';fb.className='qfb on mal';}
+  var feedback;
+  if(ok){qScore++;feedback=pickPhrase(PIPO_CORRECT)+' La respuesta era '+q.ok+'.';}
+  else{feedback='❌ La respuesta correcta era '+q.ok+'. Revisá el tema.';}
+  fb.textContent=feedback; fb.className='qfb on '+(ok?'ok':'mal');
   nxt.className='qnext on';
+  qAnswers[qIdx]={value:isNaN(val)?null:val,feedback:feedback,ok:ok};
 }
 function checkWrite(){
   if(qAnswered) return;
@@ -1012,12 +1162,23 @@ function checkWrite(){
   qWriteCount++;
   pendingWritten.unshift({materia:currentMat,tema:currentTemaTitle,pregunta:q.q,rubric:q.rubric||'',respuesta:texto||'(sin respuesta)',fecha:new Date().toLocaleDateString('es-AR'),estado:'pendiente',nota:null});
   saveState();
+  var feedback='✍️ ¡Entregado! Mamá lo va a corregir en el Panel de mamá con una rúbrica.';
   var fb=document.getElementById('qfb'), nxt=document.getElementById('qnext');
-  fb.innerHTML='✍️ ¡Entregado! Mamá lo va a corregir en el Panel de mamá con una rúbrica.';
+  fb.innerHTML=feedback;
   fb.className='qfb on ok';
   nxt.className='qnext on';
+  qAnswers[qIdx]={text:texto||'(sin respuesta)',feedback:feedback,ok:true};
 }
-function nextP(){qIdx++;qAnswered=false;var c=document.getElementById('tc-quiz');if(qIdx<quizSource.length)renderPregunta(c);else showRes(c);}
+function prevP(){
+  if(viewIdx<=0) return;
+  renderPregunta(document.getElementById('tc-quiz'), viewIdx-1);
+}
+function nextP(){
+  var c=document.getElementById('tc-quiz');
+  if(viewIdx<qIdx){ renderPregunta(c, viewIdx+1); return; }
+  qIdx++; qAnswered=false;
+  if(qIdx<quizSource.length) renderPregunta(c, qIdx); else showRes(c);
+}
 function incRepaso(mat,idx){
   var k=mat+'_'+idx;
   repasoLog[k]=(repasoLog[k]||0)+1;
@@ -1028,7 +1189,7 @@ function startRepasoQuiz(){
   if(pool.length===0){ pipoSay('Este tema todavía no tiene preguntas de opción múltiple o numéricas para repasar.'); return; }
   repasoMode=true;
   quizSource=pool.slice().sort(function(){return Math.random()-.5;});
-  qIdx=0; qScore=0; qAnswered=false;
+  qIdx=0; qScore=0; qAnswered=false; qAnswers=[];
   renderPregunta(document.getElementById('tc-quiz'));
 }
 function showRes(cont){
@@ -1336,7 +1497,7 @@ function checkPin(){
 function exportBackup(){
   lastBackup=todayKey();
   saveState();
-  var state={totalStars:totalStars,historial:historial,completados:completados,adminLog:adminLog,avatar:avatar,streak:streak,timeLog:timeLog,pendingWritten:pendingWritten,desempenoLog:desempenoLog,repasoLog:repasoLog,datoLog:datoLog,lastBackup:lastBackup};
+  var state=currentState();
   var blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a');
@@ -1355,15 +1516,8 @@ function importBackup(evt){
     try{
       var st=JSON.parse(e.target.result);
       if(!confirm('¿Reemplazar los datos actuales de Pipo con este respaldo? Las estrellas y el progreso de ahora se van a perder si no coinciden.')) { evt.target.value=''; return; }
-      totalStars=st.totalStars||0; historial=st.historial||[]; completados=st.completados||{}; adminLog=st.adminLog||[];
-      if(st.avatar) avatar=st.avatar;
-      if(st.streak) streak=st.streak;
-      timeLog=st.timeLog||{};
-      pendingWritten=st.pendingWritten||[];
-      desempenoLog=st.desempenoLog||[];
-      repasoLog=st.repasoLog||{};
-      datoLog=st.datoLog||{};
-      lastBackup=st.lastBackup||lastBackup; epoch=Date.now();
+      applyState(st);
+      epoch=Date.now();
       saveState();
       updateStars(); updateAvatarUI(); renderAdmin();
       alert('✅ Respaldo restaurado. Las estrellas y el progreso de Salva ya están de vuelta.');
@@ -1494,7 +1648,7 @@ function renderAdmin(){
 }
 function resetTodo(){
   if(!confirm('¿Segura que querés resetear todo? Se borran todas las estrellas y quizzes completados.')) return;
-  totalStars=0; historial=[]; completados={}; adminLog=[]; timeLog={}; pendingWritten=[]; desempenoLog=[]; repasoLog={}; datoLog={};
+  totalStars=0; historial=[]; completados={}; adminLog=[]; timeLog={}; pendingWritten=[]; desempenoLog=[]; repasoLog={}; datoLog={}; pronLog={};
   streak={count:0,last:'',awarded:[]}; epoch=Date.now();
   try{localStorage.removeItem('pipo_v6_state');}catch(e){}
   updateStars(); updateStreak(); renderAdmin();
@@ -1516,31 +1670,37 @@ function makeAvatarSVG(av,w,h,animated){
   return '<svg viewBox="0 0 80 110" width="'+w+'" height="'+h+'" xmlns="http://www.w3.org/2000/svg">'+
     '<ellipse cx="40" cy="107" rx="20" ry="4" fill="rgba(0,0,0,.15)"/>'+
     '<g class="av-figure'+an+'">'+
-    '<rect x="20" y="8" width="40" height="14" rx="4" fill="'+hair+'"/>'+
-    '<rect x="18" y="14" width="6" height="10" rx="2" fill="'+hair+'"/>'+
-    '<rect x="56" y="14" width="6" height="10" rx="2" fill="'+hair+'"/>'+
-    '<rect x="22" y="14" width="36" height="32" rx="5" fill="'+skin+'"/>'+
+    '<path d="M26 60 Q17 63 16 76 Q15.5 83 19 86" stroke="'+shirt+'" stroke-width="9" fill="none" stroke-linecap="round"/>'+
+    '<ellipse cx="19.5" cy="87" rx="5" ry="5.5" fill="'+skin+'"/>'+
+    '<path d="M33 80 Q31 91 30 100" stroke="'+pants+'" stroke-width="12" fill="none" stroke-linecap="round"/>'+
+    '<path d="M47 80 Q49 91 50 100" stroke="'+pants+'" stroke-width="12" fill="none" stroke-linecap="round"/>'+
+    '<ellipse cx="29" cy="102" rx="8" ry="5" fill="'+shoes+'"/>'+
+    '<ellipse cx="51" cy="102" rx="8" ry="5" fill="'+shoes+'"/>'+
+    '<path d="M27 58 Q27 53 33 53 L47 53 Q53 53 53 58 L54 82 Q40 88.5 26 82 Z" fill="'+shirt+'"/>'+
+    '<path d="M54 60 Q63 63 64.5 75 Q65.5 82 61 86" stroke="'+shirt+'" stroke-width="9.5" fill="none" stroke-linecap="round"/>'+
+    '<ellipse cx="60.5" cy="87.5" rx="5.3" ry="5.8" fill="'+skin+'"/>'+
+    '<rect x="35" y="42" width="10" height="10" rx="4" fill="'+skin+'"/>'+
+    '<ellipse cx="40" cy="23" rx="17.5" ry="16.5" fill="'+hair+'"/>'+
+    '<ellipse cx="40" cy="31" rx="13.2" ry="14.2" fill="'+skin+'"/>'+
+    '<ellipse cx="26.5" cy="32" rx="2.6" ry="3.4" fill="'+skin+'"/>'+
+    '<ellipse cx="53.5" cy="32" rx="2.6" ry="3.4" fill="'+skin+'"/>'+
+    '<path d="M23 22 Q24 10 40 7 Q56 10 57 22 Q52 14 46 15 Q43 11 40 15 Q37 11 34 15 Q28 14 23 22 Z" fill="'+hair+'"/>'+
+    '<path d="M30 25.5 Q33.5 23.5 37 25" stroke="'+hair+'" stroke-width="1.6" fill="none" stroke-linecap="round"/>'+
+    '<path d="M43 25 Q46.5 23.5 50 25.5" stroke="'+hair+'" stroke-width="1.6" fill="none" stroke-linecap="round"/>'+
     '<g class="av-eye'+an+'">'+
-    '<rect x="29" y="22" width="8" height="8" rx="2" fill="white"/>'+
-    '<rect x="31" y="24" width="4" height="4" rx="1" fill="#1a1a2e"/>'+
-    '<rect x="33" y="24" width="2" height="2" fill="white"/>'+
+    '<ellipse cx="34" cy="30.5" rx="3.6" ry="4.2" fill="white"/>'+
+    '<circle cx="34.6" cy="31" r="2.15" fill="#1a1a2e"/>'+
+    '<circle cx="35.5" cy="29.8" r=".8" fill="white"/>'+
     '</g>'+
     '<g class="av-eye'+an+' e2">'+
-    '<rect x="43" y="22" width="8" height="8" rx="2" fill="white"/>'+
-    '<rect x="45" y="24" width="4" height="4" rx="1" fill="#1a1a2e"/>'+
-    '<rect x="47" y="24" width="2" height="2" fill="white"/>'+
+    '<ellipse cx="46" cy="30.5" rx="3.6" ry="4.2" fill="white"/>'+
+    '<circle cx="46.6" cy="31" r="2.15" fill="#1a1a2e"/>'+
+    '<circle cx="47.5" cy="29.8" r=".8" fill="white"/>'+
     '</g>'+
-    '<path d="M32 36 Q40 42 48 36" stroke="#7B3F00" stroke-width="2" fill="none" stroke-linecap="round"/>'+
-    '<rect x="20" y="48" width="40" height="30" rx="5" fill="'+shirt+'"/>'+
-    '<text x="40" y="68" text-anchor="middle" font-size="10" font-weight="900" fill="white" opacity=".75">10</text>'+
-    '<rect x="8" y="50" width="12" height="24" rx="5" fill="'+shirt+'"/>'+
-    '<rect x="60" y="50" width="12" height="24" rx="5" fill="'+shirt+'"/>'+
-    '<rect x="8" y="72" width="12" height="10" rx="4" fill="'+skin+'"/>'+
-    '<rect x="60" y="72" width="12" height="10" rx="4" fill="'+skin+'"/>'+
-    '<rect x="20" y="76" width="18" height="22" rx="4" fill="'+pants+'"/>'+
-    '<rect x="42" y="76" width="18" height="22" rx="4" fill="'+pants+'"/>'+
-    '<rect x="18" y="96" width="22" height="10" rx="4" fill="'+shoes+'"/>'+
-    '<rect x="40" y="96" width="22" height="10" rx="4" fill="'+shoes+'"/>'+
+    '<ellipse cx="29.5" cy="36" rx="2.6" ry="1.7" fill="#ff8a80" opacity=".35"/>'+
+    '<ellipse cx="50.5" cy="36" rx="2.6" ry="1.7" fill="#ff8a80" opacity=".35"/>'+
+    '<path d="M39.3 32.5 Q39 35 40.5 35.3" stroke="'+skin+'" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".55"/>'+
+    '<path d="M35.5 38.5 Q40 42.5 44.5 38.5" stroke="#7B3F00" stroke-width="1.8" fill="none" stroke-linecap="round"/>'+
     '<text x="70" y="80" text-anchor="middle" font-size="14">'+av.acc+'</text>'+
     '</g>'+
     '</svg>';
@@ -1666,7 +1826,7 @@ var DATOS={
        {q:'"El río llora de noche" es...',o:['Metáfora','Comparación','Personificación','Rima'],ok:2},
        {q:'¿Cómo se llama el grupo de versos?',o:['Párrafo','Rima','Estrofa','Verso'],ok:2},
        {q:'¿Qué es un caligrama?',o:['Un poema sin rima','Un poema donde las palabras forman un dibujo relacionado con el tema','Una estrofa muy larga','Un tipo de rima asonante'],ok:1},
-       {type:'write',q:'Escribí un poema corto de 2 estrofas usando al menos una metáfora y una personificación.',rubric:'✅ Tiene 2 estrofas · ✅ Usa una metáfora clara · ✅ Usa una personificación clara · ✅ Tiene alguna rima · ✅ Se entiende el sentido general',starter:'Estrofa 1:\nEl/La ___ es como ___ (esa es tu metáfora)\n\nEstrofa 2:\nEl/La ___ (algo que no es persona) ___ (una acción de persona) — (esa es tu personificación)'}
+       {type:'write',q:'Escribí un poema corto de 2 estrofas usando al menos una metáfora y una personificación.',rubric:'✅ Tiene 2 estrofas · ✅ Usa una metáfora clara · ✅ Usa una personificación clara · ✅ Tiene alguna rima · ✅ Se entiende el sentido general',hint1:'Pensá en algo que te guste (un lugar, un animal, un sentimiento). Para la metáfora: ¿a qué otra cosa se parece? Para la personificación: ¿qué acción humana podría hacer algo que no es persona?',starter:'Estrofa 1:\nEl/La ___ es como ___ (esa es tu metáfora)\n\nEstrofa 2:\nEl/La ___ (algo que no es persona) ___ (una acción de persona) — (esa es tu personificación)'}
      ]
     },
     {titulo:'Sustantivos y Adjetivos',sub:'Clasificación semántica y morfológica',stars:3,
@@ -1691,7 +1851,7 @@ var DATOS={
        {q:'En "mi pelota", "mi" es adjetivo...',o:['Calificativo','Gentilicio','Posesivo','Demostrativo'],ok:2},
        {q:'"Cordobés" es adjetivo...',o:['Calificativo','Gentilicio','Numeral','Posesivo'],ok:1},
        {q:'"Este libro" — "este" es adjetivo...',o:['Posesivo','Numeral','Gentilicio','Demostrativo'],ok:3},
-       {type:'write',q:'Escribí 3 oraciones: una con un sustantivo abstracto, otra con un adjetivo gentilicio y otra con un adjetivo posesivo. Marcá cuál palabra es cada una.',rubric:'✅ Sustantivo abstracto correcto y señalado · ✅ Adjetivo gentilicio correcto y señalado · ✅ Adjetivo posesivo correcto y señalado · ✅ Oraciones completas y con sentido',starter:'1) Sustantivo abstracto: La ___ es importante para mí. (ejemplo: la amistad)\n2) Adjetivo gentilicio: Mi amigo es ___. (ejemplo: argentino)\n3) Adjetivo posesivo: Ese es ___ cuaderno. (ejemplo: mi)'}
+       {type:'write',q:'Escribí 3 oraciones: una con un sustantivo abstracto, otra con un adjetivo gentilicio y otra con un adjetivo posesivo. Marcá cuál palabra es cada una.',rubric:'✅ Sustantivo abstracto correcto y señalado · ✅ Adjetivo gentilicio correcto y señalado · ✅ Adjetivo posesivo correcto y señalado · ✅ Oraciones completas y con sentido',hint1:'Pensá en una idea que no se puede tocar (eso es abstracto, como la alegría o la amistad). Después pensá en un país o ciudad para el gentilicio, y en algo tuyo para el posesivo.',starter:'1) Sustantivo abstracto: La ___ es importante para mí. (ejemplo: la amistad)\n2) Adjetivo gentilicio: Mi amigo es ___. (ejemplo: argentino)\n3) Adjetivo posesivo: Ese es ___ cuaderno. (ejemplo: mi)'}
      ]
     }
   ]},
@@ -1711,6 +1871,11 @@ var DATOS={
      videos:[
        {e:'⚖️',t:'Comparatives & Superlatives',c:'YouTube (canción)',d:'4 min',embed:'WswjYJYKzWs'}
      ],
+     pronunciacion:[
+       {frase:'She is taller than her brother.',es:'Ella es más alta que su hermano.'},
+       {frase:'This is the best day of my life.',es:'Este es el mejor día de mi vida.'},
+       {frase:'My dog is as fast as a rabbit.',es:'Mi perro es tan rápido como un conejo.'}
+     ],
      juegos:[
        {e:'🎮',t:'Comparative or Superlative? — Wordwall',d:'Jugá y elegí la opción correcta',url:'https://wordwall.net/es/resource/75759311/english/comparative-or-superlative'},
        {e:'🕹️',t:'Comparative & Superlative Adjectives',d:'Practica con ejemplos variados',url:'https://wordwall.net/es/resource/95855840/ingl%C3%A9s/comparative-and-superlative-adjectives'},
@@ -1722,7 +1887,7 @@ var DATOS={
        {q:'What is the superlative of "good"?',o:['Gooder','The goodest','Better','The best'],ok:3},
        {q:'Complete: "She is ___ girl in class." (tall)',o:['the tallest','taller','most tall','the most tall'],ok:0},
        {q:'Happy → happier. What rule is this?',o:['Double the consonant','Change y to i','Add more','Add -er normally'],ok:1},
-       {type:'write',q:'Write 3 sentences comparing yourself with a friend or family member: one comparative sentence, one superlative sentence, and one "as...as" sentence.',rubric:'✅ One correct comparative sentence · ✅ One correct superlative sentence · ✅ One correct "as...as" sentence · ✅ Sentences make sense and are grammatically clear',starter:'Comparative: I am taller than ___.\nSuperlative: My ___ is the funniest in my family.\nAs...as: I am as fast as ___.'}
+       {type:'write',q:'Write 3 sentences comparing yourself with a friend or family member: one comparative sentence, one superlative sentence, and one "as...as" sentence.',rubric:'✅ One correct comparative sentence · ✅ One correct superlative sentence · ✅ One correct "as...as" sentence · ✅ Sentences make sense and are grammatically clear',hint1:'Think of a friend or family member. What is one way you are different from them? What is something you both share?',starter:'Comparative: I am taller than ___.\nSuperlative: My ___ is the funniest in my family.\nAs...as: I am as fast as ___.'}
      ]
     },
     {titulo:'Writing — Journal & Biography',sub:'How to organize a text in English',stars:4,
@@ -1738,6 +1903,11 @@ var DATOS={
      teoria:'<div class="info-card"><div class="ie">📰</div><div class="it"><strong>MAGAZINE ARTICLE</strong><span>Título llamativo → Párrafo intro (qué, quién, dónde, cuándo) → Desarrollo con detalles → Conclusión/opinión. Vocabulario útil: according to, experts say, this shows that, as a result, furthermore.</span></div></div>'+
        '<div class="info-card"><div class="ie">🔤</div><div class="it"><strong>PAST SIMPLE — verbos regulares</strong><span>Se forma agregando -ED al verbo:\nwalk → walked / play → played / discover → discovered\nSi termina en -e: solo agregar -d: love→loved\nSi termina en consonante+y: cambiar y→ied: study→studied</span></div></div>',
      videos:[],
+     pronunciacion:[
+       {frase:'Yesterday I played football with my friends.',es:'Ayer jugué al fútbol con mis amigos.'},
+       {frase:'I felt really happy because I won the game.',es:'Me sentí muy feliz porque gané el juego.'},
+       {frase:'She was born in Argentina in 2015.',es:'Ella nació en Argentina en 2015.'}
+     ],
      juegos:[],
      quiz:[
        {q:'In a journal entry, what tense for what happened?',o:['Present simple','Future','Past simple','Present continuous'],ok:2},
@@ -1745,7 +1915,7 @@ var DATOS={
        {q:'Which connector shows the FINAL event?',o:['First','Then','After that','Finally'],ok:3},
        {q:'"She discovered penicillin in 1928" — what tense?',o:['Present simple','Past simple','Future','Present perfect'],ok:1},
        {q:'Complete: "study" in past simple is...',o:['studyed','studiyed','studied','studid'],ok:2},
-       {type:'write',q:'Write a short journal entry (3-4 sentences) about something that happened to you this week. Use Past Simple and say how you felt.',rubric:'✅ Uses Past Simple correctly · ✅ Says how they felt and why · ✅ At least 3 sentences · ✅ Makes sense and is on topic',starter:'This week I ___ (what happened). I felt ___ because ___.'}
+       {type:'write',q:'Write a short journal entry (3-4 sentences) about something that happened to you this week. Use Past Simple and say how you felt.',rubric:'✅ Uses Past Simple correctly · ✅ Says how they felt and why · ✅ At least 3 sentences · ✅ Makes sense and is on topic',hint1:'Think of one thing that happened to you this week, big or small. How did it make you feel, and why?',starter:'This week I ___ (what happened). I felt ___ because ___.'}
      ]
     },
     {titulo:'Trinity: Comparison Report & Magazine Article',sub:'Los dos formatos de escritura más nuevos',stars:4,
@@ -1759,13 +1929,18 @@ var DATOS={
      ],
      teoria:'<div class="info-card"><div class="ie">📰</div><div class="it"><strong>MAGAZINE ARTICLE — STRUCTURE (extra)</strong><span>Title (catchy) → Introduction (hook the reader) → Body paragraphs (facts, examples, maybe subheadings) → Conclusion or fun fact. Tip: read it out loud — does it sound interesting to a reader, not just correct?</span></div></div>',
      videos:[],
+     pronunciacion:[
+       {frase:'Both cats and dogs are popular pets.',es:'Tanto los gatos como los perros son mascotas populares.'},
+       {frase:'However, cats are more independent than dogs.',es:'Sin embargo, los gatos son más independientes que los perros.'},
+       {frase:'Did you know that octopuses have three hearts?',es:'¿Sabías que los pulpos tienen tres corazones?'}
+     ],
      juegos:[],
      quiz:[
        {q:'A comparison and contrast report needs to show...',o:['Only differences','Only similarities','Both similarities AND differences','Just an opinion'],ok:2},
        {q:'Which linking word is used to show a DIFFERENCE?',o:['Also','However','Both','Similarly'],ok:1},
        {q:'A magazine article usually starts with...',o:['A boring list','A catchy title and hook','Just a date','Nothing, straight to facts'],ok:1},
-       {type:'write',q:'Write a short comparison & contrast paragraph (4-5 sentences) comparing two animals, places, or characters. Use at least one linking word for similarity and one for difference.',rubric:'✅ Mentions at least one similarity · ✅ Mentions at least one difference · ✅ Uses at least one linking word (both/also/but/however) · ✅ At least 4-5 sentences · ✅ Makes sense',starter:'Both ___ and ___ are similar because they ___. However, ___ is different because ___. In my opinion, ___.'},
-       {type:'write',q:'Write the opening of a magazine article about a topic you like (a sport, a game, an animal, a place): a title + 2-3 sentences.',rubric:'✅ Has a catchy title · ✅ Introduction hooks the reader · ✅ At least 2-3 sentences · ✅ Makes sense and stays on topic',starter:'Title: ___!\nDid you know that ___? In this article, you will learn about ___.'}
+       {type:'write',q:'Write a short comparison & contrast paragraph (4-5 sentences) comparing two animals, places, or characters. Use at least one linking word for similarity and one for difference.',rubric:'✅ Mentions at least one similarity · ✅ Mentions at least one difference · ✅ Uses at least one linking word (both/also/but/however) · ✅ At least 4-5 sentences · ✅ Makes sense',hint1:'Think of two things you know well. What is one thing they share? What is one thing that makes them different?',starter:'Both ___ and ___ are similar because they ___. However, ___ is different because ___. In my opinion, ___.'},
+       {type:'write',q:'Write the opening of a magazine article about a topic you like (a sport, a game, an animal, a place): a title + 2-3 sentences.',rubric:'✅ Has a catchy title · ✅ Introduction hooks the reader · ✅ At least 2-3 sentences · ✅ Makes sense and stays on topic',hint1:'Think of a topic you love. What is one interesting fact about it that would make someone want to keep reading?',starter:'Title: ___!\nDid you know that ___? In this article, you will learn about ___.'}
      ]
     }
   ]},
@@ -2194,7 +2369,7 @@ function cloudFormatCode(c){ return (c||'').replace(/(.{4})(?=.)/g,'$1-'); }
 // --- estado actual <-> objeto plano ---
 function currentState(){
   return {totalStars:totalStars,historial:historial,completados:completados,adminLog:adminLog,avatar:avatar,streak:streak,
-    timeLog:timeLog,pendingWritten:pendingWritten,desempenoLog:desempenoLog,repasoLog:repasoLog,datoLog:datoLog,
+    timeLog:timeLog,pendingWritten:pendingWritten,desempenoLog:desempenoLog,repasoLog:repasoLog,datoLog:datoLog,pronLog:pronLog,
     lastBackup:lastBackup,epoch:epoch};
 }
 function applyState(st){
@@ -2202,7 +2377,7 @@ function applyState(st){
   if(st.avatar) avatar=st.avatar;
   if(st.streak) streak=st.streak;
   timeLog=st.timeLog||{}; pendingWritten=st.pendingWritten||[]; desempenoLog=st.desempenoLog||[];
-  repasoLog=st.repasoLog||{}; datoLog=st.datoLog||{}; lastBackup=st.lastBackup||''; epoch=st.epoch||0;
+  repasoLog=st.repasoLog||{}; datoLog=st.datoLog||{}; pronLog=st.pronLog||{}; lastBackup=st.lastBackup||''; epoch=st.epoch||0;
 }
 
 // --- comparación canónica (ignora el orden de claves y de elementos de listas) ---
@@ -2240,6 +2415,7 @@ function cMergeStates(base,local,cloud){
   m.repasoLog=cMergeCounters(base.repasoLog,local.repasoLog,cloud.repasoLog);
   m.completados=Object.assign({},cloud.completados,local.completados);
   m.datoLog=Object.assign({},cloud.datoLog,local.datoLog);
+  m.pronLog=Object.assign({},cloud.pronLog,local.pronLog);
   m.historial=cUnion([local.historial,cloud.historial],30);
   m.adminLog=cUnion([local.adminLog,cloud.adminLog]);
   m.desempenoLog=cUnion([local.desempenoLog,cloud.desempenoLog]);
