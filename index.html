@@ -547,7 +547,7 @@ var screenStack=['s-home'];
 var currentMode='ver', currentMat='', currentTemaIdx=0, currentTema=null, currentTemaTitle='';
 var qIdx=0, qScore=0, qAnswered=false, slideIdx=0, viewIdx=0, qAnswers=[];
 var wqIdx=0, wqAnswered=false;
-var avatar={skin:'#C68642',hair:'#1a1a1a',shirt:'#CC0000',pants:'#1a3a6b',shoes:'#111',acc:'⚽',bg:'river'};
+var avatar={skin:'#F5D5A0',hair:'#F5C518',shirt:'#8A96A3',pants:'#1a3a6b',shoes:'#111',eyes:'#4A90D9',acc:'⚽',bg:'river'};
 
 // ===== NAVEGACIÓN =====
 function showScreen(id,opts){
@@ -1051,16 +1051,28 @@ function submitWriteEdit(pregunta){
   buildQuiz();
 }
 function showWriteHint(isEdit){
-  var q=isEdit?window._editHintQ:quizSource[qIdx];
+  var q=isEdit?window._editHintQ:quizSource[viewIdx];
   var box=document.getElementById('qhintbox'); if(!box||!q) return;
   box.innerHTML='<div class="qrubric" style="background:#FEF9C3">💭 '+(q.hint1||'Pensá en tus propias palabras. ¿Qué es lo primero que se te ocurre sobre el tema?')+'</div>'+
     '<button class="btn-s" style="margin-bottom:.5rem" onclick="showWriteHintExample('+isEdit+')">🔍 Todavía no se me ocurre, mostrame un ejemplo</button>';
 }
 function showWriteHintExample(isEdit){
-  var q=isEdit?window._editHintQ:quizSource[qIdx];
+  var q=isEdit?window._editHintQ:quizSource[viewIdx];
   var box=document.getElementById('qhintbox'); if(!box||!q) return;
   box.innerHTML='<div class="qrubric" style="background:#FEF9C3">💭 '+(q.hint1||'')+'</div>'+
     '<div class="qrubric" style="background:#FDE68A">💡 Para empezar, podés escribir algo así:<br><i>'+(q.starter?q.starter.replace(/\n/g,'<br>'):'Contá con tus propias palabras lo que entendiste del tema.')+'</i></div>';
+}
+function updateWriteAnswer(idx){
+  var q=quizSource[idx];
+  var ta=document.getElementById('qwritearea');
+  var texto=(ta.value||'').trim();
+  if(!texto){ pipoSay('Escribí aunque sea una idea antes de actualizar.'); return; }
+  if(!qAnswers[idx]) qAnswers[idx]={};
+  qAnswers[idx].text=texto;
+  var pw=findPendingWritten(currentMat,currentTemaTitle,q.q);
+  if(pw && pw.estado==='pendiente'){ pw.respuesta=texto; pw.fecha=new Date().toLocaleDateString('es-AR'); }
+  saveState();
+  pipoSay('¡Actualizado! Mamá va a ver tu versión más nueva 🎉');
 }
 function pickPhrase(arr){return arr[Math.floor(Math.random()*arr.length)];}
 var PIPO_CORRECT=['🎉 ¡Gol de Pipo! Correcto.','⛏️ ¡Crafteaste la respuesta perfecta!','🏆 ¡Como River en la Libertadores! Correcto.','💎 ¡Encontraste el diamante! Respuesta correcta.','🔥 ¡Imparable! Correcto.','⚽ ¡La metiste en el ángulo! Correcto.'];
@@ -1088,13 +1100,24 @@ function renderPregunta(cont, idx){
         html+='<button class="'+cls+'" disabled>'+o+'</button>';
       });
       html+='</div>';
+      html+='<div class="qfb on '+(rec.ok===false?'mal':'ok')+'">'+(rec.feedback||'')+'</div>';
     } else if(type==='num'){
       html+='<input type="number" class="qnum-inp" value="'+(rec.value!==undefined&&rec.value!==null?rec.value:'')+'" disabled>';
+      html+='<div class="qfb on '+(rec.ok===false?'mal':'ok')+'">'+(rec.feedback||'')+'</div>';
     } else if(type==='write'){
-      html+='<div class="qwrite-pend" style="background:#E0F2FE;color:#075985">👀 Estás revisando — esto ya lo entregaste, no se puede editar desde acá.</div>'+
-        '<textarea class="qwrite-area" disabled>'+(rec.text||'')+'</textarea>';
+      var pw=findPendingWritten(currentMat,currentTemaTitle,q.q);
+      if(pw && pw.estado==='corregida'){
+        html+='<div class="qwrite-pend" style="background:#DCFCE7;color:#166534">✅ Ya la corrigió mamá: '+pw.nota+'/5 ⭐ — no se puede editar.</div>'+
+          '<div style="background:var(--fondo);border-radius:9px;padding:.7rem;font-size:.82rem;color:#334155;white-space:pre-wrap">'+(pw.respuesta||'')+'</div>';
+      } else {
+        html+='<div class="qwrite-pend" style="background:#E0F2FE;color:#075985">👀 Revisando — todavía podés seguir editando esta redacción mientras mamá no la corrija.</div>'+
+          buildRubricChecklist(q.rubric)+
+          '<button class="btn-s" onclick="showWriteHint(false)" style="margin-bottom:.5rem">🆘 Necesito una ayudita</button>'+
+          '<div id="qhintbox"></div>'+
+          '<textarea class="qwrite-area" id="qwritearea">'+((rec.text&&rec.text!=='(sin respuesta)')?rec.text:'')+'</textarea>'+
+          '<button class="btn-p" onclick="updateWriteAnswer('+idx+')">Actualizar mi respuesta ✓</button>';
+      }
     }
-    html+='<div class="qfb on '+(rec.ok===false?'mal':'ok')+'">'+(rec.feedback||'')+'</div>';
   } else {
     if(type==='mc'){
       html+='<div class="quiz-opts">';
@@ -1555,6 +1578,29 @@ function addDesempeno(){
   if(bonus>0) addStars(bonus,'Tarea de desempeño: '+tarea+' ('+materia+') — Nota '+nota+'/10');
   saveState(); renderAdmin();
 }
+function copiarPendientes(){
+  var pend=pendingWritten.filter(function(w){return w.estado==='pendiente';});
+  if(pend.length===0){ pipoSay('No hay redacciones pendientes ahora mismo.'); return; }
+  var texto='Ayudame a corregir estas redacciones de Salva (Pipo). Para cada una decime si está bien, qué le falta según la rúbrica, y una nota sugerida del 1 al 5:\n\n';
+  pend.forEach(function(w,i){
+    texto+='— Redacción '+(i+1)+' —\n'+
+      'Materia: '+w.materia+' · Tema: '+w.tema+'\n'+
+      'Consigna: '+w.pregunta+'\n'+
+      (w.rubric?'Rúbrica: '+w.rubric+'\n':'')+
+      'Lo que escribió Salva: "'+w.respuesta+'"\n\n';
+  });
+  var ta=document.createElement('textarea');
+  ta.value=texto; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{
+    document.execCommand('copy');
+    pipoSay('📋 ¡Copiado! Pegalo en el chat con Claude y te va a sugerir una nota para cada una.');
+  }catch(e){
+    pipoSay('No pude copiarlo automáticamente. Mirá la consola o probá desde otro navegador.');
+    console.log(texto);
+  }
+  document.body.removeChild(ta);
+}
 function gradeWritten(idx,nota){
   var w=pendingWritten[idx]; if(!w) return;
   w.estado='corregida'; w.nota=nota;
@@ -1611,7 +1657,9 @@ function renderAdmin(){
     '<div class="astat"><span class="lbl">Hoy</span><span class="val">'+fmtTime(todaySec)+'</span></div>'+
     '<div class="astat"><span class="lbl">Últimos 7 días</span><span class="val">'+fmtTime(weekSec)+'</span></div>'+
     '</div>'+
-    '<div class="admin-wrap"><h3>✍️ Redacciones para corregir</h3>'+pendHtml+'</div>'+
+    '<div class="admin-wrap"><h3>✍️ Redacciones para corregir</h3>'+
+    (pend.length>0?'<button class="btn-s" style="margin-bottom:.8rem" onclick="copiarPendientes()">📋 Copiar todas para pedirle ayuda a Claude</button>':'')+
+    pendHtml+'</div>'+
     '<div class="admin-wrap"><h3>🔍 Ideas de Salva (dato del día)</h3>'+
     '<p style="font-size:.76rem;color:var(--gris);margin-bottom:.6rem">Son reflexiones, no respuestas "correctas o incorrectas" — no hace falta corregirlas, es solo para que veas cómo piensa.</p>'+
     (Object.keys(datoLog).length===0?'<p style="color:var(--gris);font-size:.8rem">Todavía no respondió ningún dato del día.</p>':
@@ -1658,15 +1706,16 @@ function resetTodo(){
 // ===== AVATAR =====
 var AV_OPTIONS={
   hair:[{v:'#1a1a1a',l:'Negro'},{v:'#6B3A2A',l:'Castaño'},{v:'#F5C518',l:'Rubio'},{v:'#C0392B',l:'Pelirrojo'},{v:'#ddd',l:'Blanco'}],
-  shirt:[{v:'#CC0000',l:'River ❤️'},{v:'#2A4499',l:'Azul'},{v:'#27AE60',l:'Verde'},{v:'#222',l:'Negra'},{v:'#F5C842',l:'Amarilla'},{v:'#E67E22',l:'Naranja'}],
+  shirt:[{v:'#CC0000',l:'River ❤️'},{v:'#2A4499',l:'Azul'},{v:'#27AE60',l:'Verde'},{v:'#222',l:'Negra'},{v:'#F5C842',l:'Amarilla'},{v:'#E67E22',l:'Naranja'},{v:'#8A96A3',l:'Gris'}],
   pants:[{v:'#1a3a6b',l:'Azul'},{v:'#222',l:'Negro'},{v:'#7B5B3A',l:'Marrón'},{v:'#eee',l:'Blanco'},{v:'#166534',l:'Verde'}],
   shoes:[{v:'#111',l:'Negras'},{v:'#fff',l:'Blancas'},{v:'#c0392b',l:'Rojas'},{v:'#1B2D6B',l:'Azules'}],
   acc:[{v:'⚽',l:'Pelota'},{v:'🎮',l:'Joystick'},{v:'🧱',l:'Lego'},{v:'🏆',l:'Copa'},{v:'⛏️',l:'Pico MC'},{v:'🦁',l:'León River'},{v:'🎒',l:'Mochila'},{v:'📚',l:'Libros'}],
-  skin:[{v:'#C68642',l:'Marrón'},{v:'#F5D5A0',l:'Claro'},{v:'#D4956A',l:'Medio'},{v:'#5C3317',l:'Oscuro'}]
+  skin:[{v:'#C68642',l:'Marrón'},{v:'#F5D5A0',l:'Claro'},{v:'#D4956A',l:'Medio'},{v:'#5C3317',l:'Oscuro'}],
+  eyes:[{v:'#1a1a2e',l:'Marrones'},{v:'#4A90D9',l:'Celestes'},{v:'#2E7D32',l:'Verdes'},{v:'#5C3A21',l:'Café claro'},{v:'#1a1a1a',l:'Negros'}]
 };
 
 function makeAvatarSVG(av,w,h,animated){
-  var skin=av.skin, hair=av.hair, shirt=av.shirt, pants=av.pants, shoes=av.shoes, an=animated?' anim':'';
+  var skin=av.skin, hair=av.hair, shirt=av.shirt, pants=av.pants, shoes=av.shoes, eyes=av.eyes||'#1a1a2e', an=animated?' anim':'';
   return '<svg viewBox="0 0 80 110" width="'+w+'" height="'+h+'" xmlns="http://www.w3.org/2000/svg">'+
     '<ellipse cx="40" cy="107" rx="20" ry="4" fill="rgba(0,0,0,.15)"/>'+
     '<g class="av-figure'+an+'">'+
@@ -1684,18 +1733,20 @@ function makeAvatarSVG(av,w,h,animated){
     '<ellipse cx="40" cy="31" rx="13.2" ry="14.2" fill="'+skin+'"/>'+
     '<ellipse cx="26.5" cy="32" rx="2.6" ry="3.4" fill="'+skin+'"/>'+
     '<ellipse cx="53.5" cy="32" rx="2.6" ry="3.4" fill="'+skin+'"/>'+
-    '<path d="M23 22 Q24 10 40 7 Q56 10 57 22 Q52 14 46 15 Q43 11 40 15 Q37 11 34 15 Q28 14 23 22 Z" fill="'+hair+'"/>'+
+    '<path d="M22 23 Q21 9 32 6 Q36 4.5 40 6.5 Q44 4.5 48 6 Q59 9 58 23 Q55 12 49 13.5 Q45 9.5 40 13 Q35 9.5 31 13.5 Q25 12 22 23 Z" fill="'+hair+'"/>'+
     '<path d="M30 25.5 Q33.5 23.5 37 25" stroke="'+hair+'" stroke-width="1.6" fill="none" stroke-linecap="round"/>'+
     '<path d="M43 25 Q46.5 23.5 50 25.5" stroke="'+hair+'" stroke-width="1.6" fill="none" stroke-linecap="round"/>'+
     '<g class="av-eye'+an+'">'+
-    '<ellipse cx="34" cy="30.5" rx="3.6" ry="4.2" fill="white"/>'+
-    '<circle cx="34.6" cy="31" r="2.15" fill="#1a1a2e"/>'+
-    '<circle cx="35.5" cy="29.8" r=".8" fill="white"/>'+
+    '<ellipse cx="34" cy="30.5" rx="3.9" ry="4.4" fill="white"/>'+
+    '<circle cx="34.6" cy="31" r="2.7" fill="'+eyes+'"/>'+
+    '<circle cx="34.6" cy="31" r="1.15" fill="#000" opacity=".55"/>'+
+    '<circle cx="35.7" cy="29.7" r=".9" fill="white"/>'+
     '</g>'+
     '<g class="av-eye'+an+' e2">'+
-    '<ellipse cx="46" cy="30.5" rx="3.6" ry="4.2" fill="white"/>'+
-    '<circle cx="46.6" cy="31" r="2.15" fill="#1a1a2e"/>'+
-    '<circle cx="47.5" cy="29.8" r=".8" fill="white"/>'+
+    '<ellipse cx="46" cy="30.5" rx="3.9" ry="4.4" fill="white"/>'+
+    '<circle cx="46.6" cy="31" r="2.7" fill="'+eyes+'"/>'+
+    '<circle cx="46.6" cy="31" r="1.15" fill="#000" opacity=".55"/>'+
+    '<circle cx="47.7" cy="29.7" r=".9" fill="white"/>'+
     '</g>'+
     '<ellipse cx="29.5" cy="36" rx="2.6" ry="1.7" fill="#ff8a80" opacity=".35"/>'+
     '<ellipse cx="50.5" cy="36" rx="2.6" ry="1.7" fill="#ff8a80" opacity=".35"/>'+
@@ -1766,7 +1817,7 @@ function renderAvatarScreen(){
   var body=document.getElementById('avatar-body');
   var bigSVG=makeAvatarSVG(avatar,120,160,true);
   var sections=[
-    {key:'hair',label:'💇 Cabello'},{key:'shirt',label:'👕 Remera'},
+    {key:'hair',label:'💇 Cabello'},{key:'eyes',label:'👀 Ojos'},{key:'shirt',label:'👕 Remera'},
     {key:'pants',label:'👖 Pantalón'},{key:'shoes',label:'👟 Zapatillas'},
     {key:'acc',label:'🎒 Accesorio'},{key:'skin',label:'🎨 Tono de piel'}
   ];
